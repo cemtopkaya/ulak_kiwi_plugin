@@ -43,6 +43,7 @@ function ulak_test() {
         window.$selectTests = $('#test_name_input').select2({
           tags: true,
           multiple: true,
+          maximumSelectionLength: 1,
           minimumInputLength: 1,
           data: tests,
           ajax: {

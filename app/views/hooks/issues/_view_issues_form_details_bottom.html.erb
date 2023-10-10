@@ -16,7 +16,7 @@
 console.log(">>> Test seçcmek için gerekli javascript metotları....");
 
 function initSelect2() {
-
+  
   function data(params, data) {
     console.log(`>>> data fonksiyonu >>> data: ${data} >>> params: ${params}`);
     return {
@@ -44,11 +44,11 @@ function initSelect2() {
     var filteredResults = [];
     let $select2 = this.$element
     // Tüm sonuçları gezerek issue için eklenmiş olanları filtreleyin
-    data.forEach(function (test) {
-      var isAdded = $select2.val().some(added => added == test.id);
+    data.forEach(function (plan) {
+      var isAdded = $select2.val().some(added => added == plan.id);
 
       if (!isAdded) {
-        filteredResults.push({ id: test.id, text: test.summary });
+        filteredResults.push({ id: plan.id, text: `${plan.name}` });
       }
     });
 
@@ -60,8 +60,10 @@ function initSelect2() {
   $select2Tests = $('#test_select_input').select2({
     multiple: true,
     minimumInputLength: 2,
+    maximumSelectionLength: 1,
     ajax: {
-      url: '/<%= $NAME_KIWI_TESTS %>/tests',
+      url: '/<%= $NAME_KIWI_TESTS %>/test_plans',
+      // url: '/<%= $NAME_KIWI_TESTS %>/tests',
       width: '100%',
       dataType: 'json',
       delay: 250,
@@ -71,6 +73,16 @@ function initSelect2() {
       noResults,
       searching,
       processResults,
+    },
+    templateResult: function(data){
+      console.log(">>> templateResult data: ", data);
+      var formattedID = ("000" + data.id).slice(-3);
+      var $container = $(`<span>[${formattedID}] ${data.text}</span>`)
+      return $container
+    },
+    templateSelection: function(data){
+      console.log(">>> templateSelection data:", data);
+      return data.text;
     }
   });
 }
