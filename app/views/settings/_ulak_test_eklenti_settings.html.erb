@@ -1,0 +1,71 @@
+<style>
+  #plugin_settings_table {
+    width: 100%;
+  }
+
+  #plugin_settings_table td:nth-child(2) {
+    width: 80%;
+  }
+
+  #plugin_settings_table input {
+    width: 100%;
+  }
+
+  #plugin_settings_table th {
+    text-align: left;
+  }
+
+  #plugin_settings_table thead th {
+    text-align: center;
+  }
+</style>
+
+<table id="plugin_settings_table">
+  <thead>
+    <tr>
+      <th colspan="2">Kiwi REST API</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr>
+      <th>Kiwi URL</th>
+      <td>
+        <%= text_field_tag "settings_kiwi_url", @plugin.settings[:default]["kiwi_url"] %>
+      </td>
+    </tr>
+    <tr>
+      <th>API URL</th>
+      <td>
+        <%= text_field_tag "settings_rest_api_url", @plugin.settings[:default]["rest_api_url"] %>
+      </td>
+    </tr>
+    <tr>
+      <th><%= l(:field_login) %></th>
+      <td>
+        <%= text_field_tag "settings_rest_api_username", @plugin.settings[:default]["rest_api_username"] %>
+      </td>
+    </tr>
+    <tr>
+      <th><%= l(:field_password) %></th>
+      <td>
+        <%= password_field_tag "settings_rest_api_password", @plugin.settings[:default]["rest_api_password"] %>
+      </td>
+    </tr>
+    <tr>
+      <th><%= l(:text_sync_kiwi_tests) %></th>
+      <td>
+        <script>
+          function syncKiwiTests() {
+            $.get("/<%= $NAME_KIWI_TESTS %>/tests/sync", function(data) {
+              console.log(data);
+              mesaj = `${data.after - data.before} Kayıt eklendi`
+              alert("Eşleştirme başarıyla tamamlandı.\n", mesaj);
+            });
+          }
+        </script>
+        <%= button_tag l(:button_sync_kiwi_tests), type: "button", name: "btn_sync_kiwi_tests", onclick: "syncKiwiTests()" %>
+      </td>
+    </tr>
+  </tbody>
+</table>

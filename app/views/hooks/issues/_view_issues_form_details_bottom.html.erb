@@ -1,0 +1,96 @@
+<%= javascript_include_tag 'issue_edit_test.js', :plugin => $NAME_KIWI_TESTS %>
+
+<%= stylesheet_link_tag 'issue_tests_tab.css', :plugin => $NAME_KIWI_TESTS %>
+<%= stylesheet_link_tag 'https://fonts.googleapis.com/icon?family=Material+Icons' %>
+<%= stylesheet_link_tag 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css' %>
+
+<% content_for :p do %>
+  <h1>Merhaba Uranüs</h1>
+  <div class="test-selec-input">
+    <%= label_tag(:test_select_input, "Issue Tests Şablondan", class: "test-selec-label", for: "test_select_input") %>
+    <%= select_tag(:test_select_input, options_for_select(select_options), label: "Tests", class: "test-select-field") %>
+  </div>
+<% end %>
+
+<script>
+console.log(">>> Test seçcmek için gerekli javascript metotları....");
+
+function initSelect2() {
+
+  function data(params, data) {
+    console.log(`>>> data fonksiyonu >>> data: ${data} >>> params: ${params}`);
+    return {
+      q: params.term, // Arama terimini gönderin
+      page: params.page
+    };
+  }
+
+  function createSearchChoice(term) {
+    console.log(`>>> createSearchChoice fonksiyonu >>> term: ${term}`);
+    return false;
+  }
+
+  function noResults() {
+    return 'No results found'
+  }
+
+  function searching() {
+    return 'Searching…'
+  }
+
+  function processResults(data, params) {
+    console.log(`>>> tests data: ${data} >>> params: ${params}`);
+
+    var filteredResults = [];
+    let $select2 = this.$element
+    // Tüm sonuçları gezerek issue için eklenmiş olanları filtreleyin
+    data.forEach(function (test) {
+      var isAdded = $select2.val().some(added => added == test.id);
+
+      if (!isAdded) {
+        filteredResults.push({ id: test.id, text: test.summary });
+      }
+    });
+
+    return {
+      results: filteredResults
+    };
+  }
+
+  $select2Tests = $('#test_select_input').select2({
+    multiple: true,
+    minimumInputLength: 2,
+    ajax: {
+      url: '/<%= $NAME_KIWI_TESTS %>/tests',
+      width: '100%',
+      dataType: 'json',
+      delay: 250,
+      cache: true,
+      data,
+      createSearchChoice,
+      noResults,
+      searching,
+      processResults,
+    }
+  });
+}
+
+$(function () {
+  if (typeof $.fn.select2 === 'undefined') {
+    // select2 kütüphanesi yüklü değil, yükleyin
+
+    var link3 = document.createElement('link');
+    link3.href = 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css';
+    link3.rel = 'stylesheet';
+    link3.type = 'text/css';
+    document.head.appendChild(link3);
+
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js';
+    document.head.appendChild(script);
+    script.onload = initSelect2
+  } else {
+    initSelect2()
+  }
+});
+</script>

@@ -1,0 +1,79 @@
+<script>
+  console.log(">>> Test seçcmek için gerekli javascript metotları....");
+</script>
+
+<%
+ if @edited_artifacts.empty? %>
+ <p>
+    <em>Kod değişimi için üretilen "Git Etiketinde" bir artifact açıklaması bulunamadı!</em><br/>
+    <pre><%= @tag_description %></pre>
+ </p>
+<%
+ else
+    kiwi_info = UlakTest::PluginSetting.get_kiwi_settings
+%>
+    <ol class="artifact_list">
+    <% @edited_artifacts.each do |package| %>
+        <li>
+            <b><%= package %></b> <br/>
+            <%
+            package_run_ids = @kiwi_tags.select { |t| t["name"].include?(package) }.map{ |t| t["run"] }
+            package_executions = @kiwi_executions.select { |e| package_run_ids.include?(e["run"]) }
+            unless package_executions.empty?
+            %>
+            <ol class="test_run_list">
+                <% package_run_ids.each do |run_id| %>
+                <li>
+                    <%
+                        run = @kiwi_runs.find{ |f| f["id"] == run_id }
+                    %>
+                    RUN ID: <a href='<%= "#{kiwi_info[:kiwi_url]}/runs/#{run_id}" %>' _target="_blank" title="<%=run["start_date"] %> - <%=run["end_date"] %>"><%= run_id %></a><br>
+                    <ul class="test_result_list">
+                        <% @kiwi_executions.select { |e| e["run"] == run_id }.each  do |e| %>
+                        <li data-case-id="<%= e["case"] %>" 
+                            data-case-status="<%= e["status"] %>" 
+                            data-case-status-name="<%= e["status__name"].downcase %>">
+                            <% case e["status"]
+                            when 1 # IDLE
+                                status_icon = "⏳"
+                                status_class = "idle"
+                            when 2 # RUNNING
+                                status_icon = "▶️"
+                                status_class = "running"
+                            when 3 # PAUSED
+                                status_icon = "⏸️"
+                                status_class = "paused"
+                            when 4 # PASSED
+                                status_icon = "✓"
+                                status_class = "passed"
+                            when 5 # FAILED
+                                status_icon = "❌"
+                                status_class = "failed"
+                            when 6 # BLOCKED
+                                status_icon = "🚫"
+                                status_class = "blocked"
+                            when 7 # ERROR
+                                status_icon = "⚠️"
+                                status_class = "error"
+                            when 8 # WAIVED > VAZGEÇİLDİ
+                                status_icon = "⚠️"
+                                status_class = "waived"
+                            else
+                                status_icon = ""
+                            end
+                            %>
+                            <!--abbr title='<%= e["status__name"] %>'> <%= status_icon %></abbr--> 
+                            <span class="c-pill c-pill--<%= status_class %>" title="<%= status_class %>">
+                                <a href='<%= "#{kiwi_info[:kiwi_url]}/case/#{e["case"]}" %>' _target="_blank"><%= e["case__summary"] %></a>
+                            </span>
+                        </li>
+                        <% end %>
+                    </ul>
+                </li>
+                <% end %>
+            </ol>
+            <% end %>
+        </li>
+    <% end %>
+    </ol>
+<% end %>
