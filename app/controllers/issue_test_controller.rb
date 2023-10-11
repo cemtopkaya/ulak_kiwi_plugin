@@ -6,29 +6,34 @@ class IssueTestController < ApplicationController
     self.remove_test_from_issue(issue_id, test_id)
   end
 
-  def self.remove_test_from_issue(issue_id, test_id)
+  def self.remove_test_from_issue(issue_id, test_plan_id)
     issue = Issue.find_by(id: issue_id)
     return render json: { error: "Issue not found" }, status: :not_found unless issue
 
-    test = Test.find_by(id: test_id)
-    return render json: { error: "Test not found" }, status: :not_found unless test
+    test_plan = IssueTestPlan.find_by(issue_id: issue_id, test_plan_id: test_plan_id)
+    return render json: { error: "The test plan bound to the issue could not be found" }, status: :not_found unless test_plan
 
-    issue_test = IssueTest.find_by(issue: issue, test: test)
-    return render json: { error: "Test not found in the issue" }, status: :not_found unless issue_test
-
-    issue_test.destroy
-    return render json: { message: "#{test.summary} Test removed from issue successfully" }, status: :ok
+    test_plan.destroy
+    return render json: { message: "#{test_plan.name} named Test Plan removed from the issue successfully" }, status: :ok
   end
 
   def add_test_to_issue
     issue_id = params[:issue_id]
-    test_id = params[:test_id]
-    self.add_test_to_issue(issue_id, test_id)
+    test_plan_id = params[:test_plan_id]
+    Rails.logger.debug("Test Plan ID: #{test_plan_id}")
+    test_plan = UlakTest::Kiwi.fetch_test_plan_by_id(test_plan_id).first
+    Rails.logger.debug("#{test_plan_id} ID'li Test Planı : #{test_plan}")
+
+    if test_plans.nil?
+      raise StandardError, "#{test_plan_id} Değerli Test Planı Kiwi sunucusunda bulunamadı!"
+    end
+    
+    self.add_test_to_issue(issue_id, test_plan["id"], test_plan["name"])
   end
 
-  def self.add_test_to_issue(issue_id, test_id)
+  def self.add_test_to_issue(issue_id, test_plan_id)
     issue = Issue.find(issue_id)
-    test = Test.find_by(id: test_id)
+    test = IssueTestPlan.find_by(test_plan_id: test_plan_id)
 
     # Use the "IssueTest" model to add the relationship
     issue_test = IssueTest.find_or_create_by(issue: issue, test: test)

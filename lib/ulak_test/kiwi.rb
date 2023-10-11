@@ -398,6 +398,34 @@ module UlakTest
       result
     end
 
+    def self.fetch_test_plan_by_id(plan_id)
+      unless plan_id
+        raise ArgumentError, "plan_id parameter can't be nil and must be greater than 0"
+      end
+
+      result = nil
+      login()
+
+      begin
+        rest = UlakTest::PluginSetting.get_kiwi_settings()
+        body = make_request_body("TestPlan.filter", [{ "id": plan_id }])
+
+        # HTTP isteği oluşturma
+        url = rest.fetch(:url)
+        http = create_http(url)
+
+        # POST isteği yapma
+        response = http.post(url, body.to_json, @headers)
+        result = JSON.parse(response.body)["result"]
+      rescue StandardError => e
+        puts "----- Error occurred: #{e.message}"
+      ensure
+        logout()
+      end
+
+      result
+    end
+
     def self.fetch_test_cases_by_plan_id(plan_id)
       unless plan_id
         raise ArgumentError, "plan_id parameter can't be nil and must be greater than 0"

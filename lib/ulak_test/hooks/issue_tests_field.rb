@@ -4,7 +4,7 @@ include ActionView::Helpers::SanitizeHelper
 module UlakTest
   module Hooks
     class IssueTestsField < Redmine::Hook::ViewListener
-      def self.upsert_issue_test(issue_id, project, new_test_ids)
+      def self.upsert_issue_test(issue_id, project, new_test_plan_ids)
         
         # Check if the user is authorized to view the plugin.
         unless User.current.allowed_to?(:edit_issue_tests, project)
@@ -13,24 +13,24 @@ module UlakTest
           return
         end
 
-        old_test_ids = Test
-          .joins(:issue_tests)
-          .where(issue_tests: { issue_id: issue_id })
-          .select(:id, :summary)
-          .pluck(:id)
+        old_test_plan_ids = IssueTestPlan
+          .where(issue_id: issue_id)
+          .select(:test_plan_id, :name)
+          .pluck(:test_plan_id)
 
-        removed_test_ids = old_test_ids - new_test_ids
-        added_test_ids = new_test_ids - old_test_ids
+        removed_test_plan_plan_ids = old_test_plan_ids - new_test_plan_ids
+        added_test_plan_plan_ids = new_test_plan_ids - old_test_plan_ids
 
-        removed_test_ids.each do |test_id|
-          IssueTestController.remove_test_from_issue(issue_id, test_id)
+        removed_test_plan_ids.each do |plan_id|
+          IssueTestController.remove_test_from_issue(issue_id, plan_id)
         end
 
-        added_test_ids.each do |test_id|
-          IssueTestController.add_test_to_issue(issue_id, test_id)
+        added_test_plan_ids.each do |plan_id|
+          IssueTestController.add_test_to_issue(issue_id, plan_id)
         end
-
-        journalize_issue_test_change(issue_id, old_test_ids, new_test_ids)
+        
+        # Eklenen ve silinene test plan ID değerlerini tarihçeye de yazıyoruz
+        journalize_issue_test_change(issue_id, old_test_plan_ids, new_test_plan_ids)
       end
 
       def controller_issues_new_after_save(context = {})
@@ -56,15 +56,9 @@ module UlakTest
         else
           # Varolan ISSUE ise atanmış test_planlarını getir
           issue = context[:issue]
-          tests = IssueTestPlan
-            .where(issue_id: issue.id)
-            .select(:test_plan_id, :name)
-            # tests = Test
-            # .joins(:issue_tests)
-            # .where(issue_tests: { issue_id: issue.id })
-            # .select(:id, :summary)
+          plans = IssueTestPlan.where(issue_id: issue.id)
           # seçilmiş testlet buna benzer olacak > select_options = [["Option 1", "1"], ["Option 2", "2"],...]
-          select_options = tests.map { |t| [t.name, t.test_plan_id, selected: "selected"] }
+          select_options = plans.map { |t| [t.name, t.test_plan_id, selected: "selected"] }
         end
 
         controller = context[:controller]
@@ -108,11 +102,11 @@ module UlakTest
 
       def process_issue_tests(context)
         Rails.logger.info(">>> process_issue_tests kısmına geldik <<<")
-        # new_tests = context[:params][:test_select_input].map(&:to_i)
-        new_tests = context.dig(:params, :test_select_input)&.map(&:to_i) || []
+        # Issue insert/edit sırasında oluşturulan form içinde özel bir eklentinin input alanının bilgisini çekmek için:
+        new_test_plan_ids = context.dig(:params, :test_select_input)&.map(&:to_i) || []
         issue_id = context[:issue].id
         project = context[:issue].project
-        IssueTestsField.upsert_issue_test(issue_id, project, new_tests)
+        IssueTestsField.upsert_issue_test(issue_id, project, new_test_plan_ids)
       end
 
       private
@@ -122,14 +116,14 @@ module UlakTest
         issue = Issue.find_by(id: issue_id)
         return unless issue
 
-        removed_test_ids = old_test_ids - new_test_ids
-        added_test_ids = new_test_ids - old_test_ids
+        removed_test_plan_plan_ids = old_test_ids - new_test_ids
+        added_test_plan_plan_ids = new_test_ids - old_test_ids
 
         # eklenen veya silinen yoksa journal değişmesin
-        return unless !added_test_ids.empty? || !removed_test_ids.empty?
+        return unless !added_test_plan_ids.empty? || !removed_test_plan_ids.empty?
 
-        added_tests = Test.where(id: added_test_ids).pluck(:summary).join("\n* ")
-        removed_tests = Test.where(id: removed_test_ids).pluck(:summary).map { |test| "-#{test}-" }.join("\n* ")
+        added_tests = Test.where(id: added_test_plan_ids).pluck(:summary).join("\n* ")
+        removed_tests = Test.where(id: removed_test_plan_ids).pluck(:summary).map { |test| "-#{test}-" }.join("\n* ")
 
         result = ""
         if !added_tests.empty?
