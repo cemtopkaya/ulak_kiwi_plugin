@@ -33,15 +33,15 @@ class IssueTestController < ApplicationController
 
   def self.add_test_to_issue(issue_id, test_plan_id)
     issue = Issue.find(issue_id)
-    test = IssueTestPlan.find_by(test_plan_id: test_plan_id)
+    test_plan = UlakTest::Kiwi.fetch_test_plan_by_id(test_plan_id).first
 
     # Use the "IssueTest" model to add the relationship
-    issue_test = IssueTest.find_or_create_by(issue: issue, test: test)
+    issue_test_plan = IssueTestPlan.find_or_create_by(issue_id: issue_id, test_plan_id: test_plan_id, name: test_plan["name"])
 
     # Return a JSON response with the success message
     return render json: {
                     success: true,
-                    message: "#{issue.id} Numaralı görev için #{test.id} numaralı test eklendi.",
+                    message: "#{issue.id} Numaralı görev için #{issue_test_plan.id} numaralı test eklendi.",
                   }
   end
 

@@ -7,15 +7,15 @@
 En temel eklentidir. Bu eklentiyle derleme, hata ayıklama vs. kullanılabilir.
 
 - `gem install ruby-debug-ide` Hata ayıklama için yüklenmesi gerekiyor
-- `rebornix.ruby` Eklentisi kurularak `launch.json` içinde derleme, çalıştırma, hata ayıklama özellikleri faal edilir
+- `Shopify.ruby-lsp` Eklentisi kurularak `launch.json` içinde derleme, çalıştırma, hata ayıklama özellikleri faal edilir
 
 ```text
-Name: Ruby
-Id: rebornix.ruby
-Description: Ruby language support and debugging for Visual Studio Code
-Version: 0.28.1
-Publisher: Peng Lv
-VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby
+Name: Ruby LSP
+Id: Shopify.ruby-lsp
+Description: VS Code plugin for connecting with the Ruby LSP
+Version: 0.4.9
+Publisher: Shopify
+VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=Shopify.ruby-lsp
 ```
 
 ### Solargraph

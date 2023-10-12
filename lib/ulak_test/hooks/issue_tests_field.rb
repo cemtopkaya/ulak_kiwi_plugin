@@ -17,20 +17,26 @@ module UlakTest
           .where(issue_id: issue_id)
           .select(:test_plan_id, :name)
           .pluck(:test_plan_id)
-
-        removed_test_plan_plan_ids = old_test_plan_ids - new_test_plan_ids
-        added_test_plan_plan_ids = new_test_plan_ids - old_test_plan_ids
-
+        
+          
+        removed_test_plan_ids = old_test_plan_ids - new_test_plan_ids
+        added_test_plan_ids = new_test_plan_ids - old_test_plan_ids
+        
+        
+        # Silinmeden önce DB'den silinenlerin journal mesajı çekiliyor
+        removed_tests_journal = IssueTestPlan.where(test_plan_id: removed_test_plan_ids).pluck(:name).map { |test| "-#{test}-" }.join("\n* ")
         removed_test_plan_ids.each do |plan_id|
           IssueTestController.remove_test_from_issue(issue_id, plan_id)
         end
-
+        
         added_test_plan_ids.each do |plan_id|
           IssueTestController.add_test_to_issue(issue_id, plan_id)
         end
+        # Eklendikten sonra DB'den eklenen journal mesajı çekiliyor
+        added_tests_journal = IssueTestPlan.where(test_plan_id: added_test_plan_ids).pluck(:name).join("\n* ")
         
         # Eklenen ve silinene test plan ID değerlerini tarihçeye de yazıyoruz
-        journalize_issue_test_change(issue_id, old_test_plan_ids, new_test_plan_ids)
+        journalize_issue_test_change(issue_id, removed_tests_journal, added_tests_journal)
       end
 
       def controller_issues_new_after_save(context = {})
@@ -112,26 +118,20 @@ module UlakTest
       private
 
       # def self.journalize_issue_test_change(issue_id, added_test_ids, removed_test_ids)
-      def self.journalize_issue_test_change(issue_id, old_test_ids, new_test_ids)
+      def self.journalize_issue_test_change(issue_id, removed_tests_for_journal, added_tests_for_journal)
         issue = Issue.find_by(id: issue_id)
         return unless issue
 
-        removed_test_plan_plan_ids = old_test_ids - new_test_ids
-        added_test_plan_plan_ids = new_test_ids - old_test_ids
-
         # eklenen veya silinen yoksa journal değişmesin
-        return unless !added_test_plan_ids.empty? || !removed_test_plan_ids.empty?
-
-        added_tests = Test.where(id: added_test_plan_ids).pluck(:summary).join("\n* ")
-        removed_tests = Test.where(id: removed_test_plan_ids).pluck(:summary).map { |test| "-#{test}-" }.join("\n* ")
+        return unless !added_tests_for_journal.empty? || !removed_tests_for_journal.empty?
 
         result = ""
-        if !added_tests.empty?
-          result += "h5. #{l(:text_issue_tests_added)}\n\n* #{added_tests}\n\n"
+        if !added_tests_for_journal.empty?
+          result += "h5. #{l(:text_issue_tests_added)}\n\n* #{added_tests_for_journal}\n\n"
         end
 
-        if !removed_tests.empty?
-          result += "h5. #{l(:text_issue_tests_removed)}\n\n* #{removed_tests}"
+        if !removed_tests_for_journal.empty?
+          result += "h5. #{l(:text_issue_tests_removed)}\n\n* #{removed_tests_for_journal}"
         end
 
         journal = issue.init_journal(User.current)
