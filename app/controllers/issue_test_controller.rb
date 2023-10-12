@@ -121,11 +121,10 @@ class IssueTestController < ApplicationController
     @cs = @issue.changesets.find_by_id(changeset_id)
 
     begin
-      @tests = Test
-        .joins(:issue_tests)
-        .where(issue_tests: { issue_id: issue_id })
-        .select(:test_case_id, :summary)  
-      @test_ids = @tests.pluck(:test_case_id)
+      @tests = IssueTestPlan
+        .where(issue_id: issue_id)
+        .select(:test_plan_id, :name)  
+      @test_ids = @tests.pluck(:test_plan_id)
 
       @artifacts = UlakTest::Git.tag_artifacts(@cs.repository.url, tag)
       if @artifacts.empty? 
@@ -183,20 +182,24 @@ class IssueTestController < ApplicationController
       return render html: html_content
     end
 
-    tests = Test
-      .joins(:issue_tests)
-      .where(issue_tests: { issue_id: issue_id })
-      .select(:test_case_id, :summary)
+    test_plan = IssueTestPlan.where(issue_id: issue_id).first
+    if !test_plan      
+      Rails.logger.info(">>> Redmine görevine ait bir test planı bulunamadı! <<<<")
+      return
+    end
 
-    #commit_with_artifacst = UlakTest::Git.commit_tags(issue.changesets)
-    commit_with_artifacst = UlakTest::Git.findTagsOfCommits(issue.changesets)
+    test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_id(test_plan["test_plan_id"])
+    tests = test_cases.map { |eleman| { "id" => eleman["id"], "summary" => eleman["summary"] } }
+
+    #commit_with_artifacts = UlakTest::Git.commit_tags(issue.changesets)
+    commit_with_artifacts = UlakTest::Git.findTagsOfCommits(issue.changesets)
 
     html_content = render_to_string(
       template: "templates/_tab_content_issue_test_results.html.erb",
       # layout: false ile tüm Redmine sayfasının derlenMEmesini sağlarız
       layout: false,
       locals: {
-        commit_with_artifacst: commit_with_artifacst,
+        commit_with_artifacts: commit_with_artifacts,
         issue: issue,
         issue_id: issue_id,
         tests: tests,

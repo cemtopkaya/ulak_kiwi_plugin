@@ -45,7 +45,7 @@ module UlakTest
               tab_test_results: {
                 issue_id: issue.id,
                 issue: issue,
-                tests: test_plan.to_json,
+                tests: [test_plan.to_json],
               },
             },
           })

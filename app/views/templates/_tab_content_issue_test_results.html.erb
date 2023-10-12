@@ -44,9 +44,9 @@
               <b><%= l(:field_issue_tests) %> :</b><br/>
               <ol class="test_case_list">
                 <% tests.each do |test| %>
-                  <li data-case-id="<%= test.test_case_id %>">
+                  <li data-case-id='<%= test["id"] %>'>
                     <span class="test-case c-pill c-pill--nostatus" title="<%= l(:text_test_run_status_didnt_run_with_artifact) %>">
-                        <a href='<%= "#{kiwi_info[:kiwi_url]}/case/#{test.test_case_id}" %>' _target="_blank"><%= test.summary %></a>
+                        <a href='<%= "#{kiwi_info[:kiwi_url]}/case/#{test["id"]}" %>' _target="_blank"><%= test["summary"] %></a>
                         <span class="test-case-result idle"     title="<%= l(:text_test_run_status_idle_count) %>"    ></span>
                         <span class="test-case-result running"  title="<%= l(:text_test_run_status_running_count) %>" ></span>
                         <span class="test-case-result paused"   title="<%= l(:text_test_run_status_paused_count) %>"  ></span>
