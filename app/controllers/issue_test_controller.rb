@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 class IssueTestController < ApplicationController
   def remove_test_from_issue
     issue_id = params[:issue_id]
@@ -27,7 +29,7 @@ class IssueTestController < ApplicationController
     if test_plans.nil?
       raise StandardError, "#{test_plan_id} Değerli Test Planı Kiwi sunucusunda bulunamadı!"
     end
-    
+
     self.add_test_to_issue(issue_id, test_plan["id"], test_plan["name"])
   end
 
@@ -92,7 +94,6 @@ class IssueTestController < ApplicationController
   # paket_adı=versiyon değerini arar. Bulduklarını paketin olduğu test sonuçları olarak görüntüler.
 
   def view_tag_runs
-    
     tag = params[:tag]
     changeset_id = params[:changeset_id]
     issue_id = params[:issue_id]
@@ -110,29 +111,28 @@ class IssueTestController < ApplicationController
       )
       return render html: html_content
     end
-        
-    # Check if the user is authorized to view the plugin.
-    unless User.current.allowed_to?(:view_tag_runs, @issue.project)
-      # The user is not authorized to view the plugin.
-      Rails.logger.info(">>> #{User.current.login} does not have permission to view the Tags of Runs will not be fetched... !!!! <<<<")
-      return
-    end
 
     @cs = @issue.changesets.find_by_id(changeset_id)
 
     begin
-      @tests = IssueTestPlan
-        .where(issue_id: issue_id)
-        .select(:test_plan_id, :name)  
-      @test_ids = @tests.pluck(:test_plan_id)
+      # issue ile ilişkili Test Plan'ını çek
+      # Test Plan'ına bağlı Test Case'leri çek
+      #
+      # Seçilen "git tag" açıklamasından (tag description) artifact'leri çek
+      # Artifactlerin geçtiği Test Run'ları bul
+      #
+      #
+      @test_plan_ids = IssueTestPlan.where(issue_id: issue_id).pluck(:test_plan_id)
+      @tests = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(@test_plan_ids)
+      @test_ids = @tests.pluck("id")
 
       @artifacts = UlakTest::Git.tag_artifacts(@cs.repository.url, tag)
-      if @artifacts.empty? 
+      if @artifacts.empty?
         @tag_description = UlakTest::Git.tag_description(@cs.repository.url, tag)
       end
       @edited_artifacts = @artifacts.map { |a| a.end_with?(".deb") ? "#{a.split("_")[0]}=#{a.split("_")[1]}" : a }
       result = UlakTest::Kiwi.is_kiwi_accessable()
-      
+
       if !result[:is_accessable]
         render json: result
         return
@@ -140,36 +140,35 @@ class IssueTestController < ApplicationController
 
       # tag -> runs
       @kiwi_tags = @edited_artifacts.map { |a| UlakTest::Kiwi.fetch_tags_by_tag_name(a) }.flatten
-      
+
       @kiwi_run_ids = @kiwi_tags.pluck("run")
       @kiwi_runs = UlakTest::Kiwi.fetch_runs_by_id_in(@kiwi_run_ids)
       @kiwi_executions = UlakTest::Kiwi.fetch_testexecution_by_run_id_in_case_id_in(@kiwi_run_ids, @test_ids)
-      # executions -> run_id_in & case_id_in 
+      # executions -> run_id_in & case_id_in
 
       html_content = render_to_string(
         template: "templates/_tab_test_results.html.erb",
         # layout: false ile tüm Redmine sayfasının derlenMEmesini sağlarız
         layout: false,
         locals: {
-          issue_id: issue_id
+          issue_id: issue_id,
         },
       )
-      render html: html_content  
+      render html: html_content
     rescue SocketError => e
       @error_message = "#{l(:text_exception_name)}: #{e.message}"
-      render 'errors/socket_error', layout: false
+      render "errors/socket_error", layout: false
     rescue StandardError => e
       puts "----- Error occurred: #{e.message}"
       @error_message = "#{l(:text_exception_name)}: #{e.message}"
-      render 'errors/error', layout: false
+      render "errors/error", layout: false
     end
-  
   end
 
   def view_issue_test_results
     issue_id = params[:issue_id]
     issue = Issue.find(issue_id)
-    
+
     # Check if the user is authorized to view the plugin.
     unless User.current.allowed_to?(:view_issue_test_results, issue.project)
       # The user is not authorized to view the plugin.
@@ -182,13 +181,13 @@ class IssueTestController < ApplicationController
       return render html: html_content
     end
 
-    test_plan = IssueTestPlan.where(issue_id: issue_id).first
-    if !test_plan      
+    test_plan_ids = IssueTestPlan.where(issue_id: issue_id).pluck(:test_plan_id)
+    if !test_plan_ids
       Rails.logger.info(">>> Redmine görevine ait bir test planı bulunamadı! <<<<")
       return
     end
 
-    test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_id(test_plan["test_plan_id"])
+    test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(test_plan_ids)
     tests = test_cases.map { |eleman| { "id" => eleman["id"], "summary" => eleman["summary"] } }
 
     #commit_with_artifacts = UlakTest::Git.commit_tags(issue.changesets)
