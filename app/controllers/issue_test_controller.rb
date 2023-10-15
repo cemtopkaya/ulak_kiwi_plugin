@@ -123,8 +123,15 @@ class IssueTestController < ApplicationController
       #
       #
       @test_plan_ids = IssueTestPlan.where(issue_id: issue_id).pluck(:test_plan_id)
-      @tests = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(@test_plan_ids)
-      @test_ids = @tests.pluck("id")
+      key_plan_cases_id_summary = "key_issue:#{issue_id}_test_plan_ids_#{@test_plan_ids.join(",")}_test_cases_id_summary"
+      test_cases_id_summary = session[key_plan_cases_id_summary]
+      if !test_cases_id_summary
+        test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(test_plan_ids)
+        test_cases_id_summary = test_cases.map { |eleman| { "id" => eleman["id"], "summary" => eleman["summary"] } }
+        session[key_plan_cases_id_summary] = test_cases_id_summary
+      end
+      # @tests = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(@test_plan_ids)
+      @test_ids = test_cases_id_summary.pluck("id")
 
       @artifacts = UlakTest::Git.tag_artifacts(@cs.repository.url, tag)
       if @artifacts.empty?
