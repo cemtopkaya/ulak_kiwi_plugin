@@ -187,11 +187,27 @@ class IssueTestController < ApplicationController
       return
     end
 
-    test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(test_plan_ids)
-    tests = test_cases.map { |eleman| { "id" => eleman["id"], "summary" => eleman["summary"] } }
+    # key_plan_cases = "key_issue:#{issue_id}_test_plan_ids_#{test_plan_ids.join(",")}_test_cases"
+    key_plan_cases_id_summary = "key_issue:#{issue_id}_test_plan_ids_#{test_plan_ids.join(",")}_test_cases_id_summary"
+    test_cases_id_summary = session[key_plan_cases_id_summary]
+    if !test_cases_id_summary
+      test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(test_plan_ids)
+      test_cases_id_summary = test_cases.map { |eleman| { "id" => eleman["id"], "summary" => eleman["summary"] } }
+      session[key_plan_cases_id_summary] = test_cases_id_summary
+    end
 
     #commit_with_artifacts = UlakTest::Git.commit_tags(issue.changesets)
-    commit_with_artifacts = UlakTest::Git.findTagsOfCommits(issue.changesets)
+    changeset_ids = issue.changesets.pluck("id")
+
+    # Bu veriyi session içinde tutunca CookiesOverflow hatası alıyorum çünkü
+    # session verisini cookie içine yazmaya çalışıyor ve bu da hataya neden oluyor.
+    # çözüm için https://www.redmineup.com/pages/help/getting-started/how-to-fix-cookiesoverflow-error
+    key_changeset_artifacts = "key_issue:#{issue_id}_chanageset_ids_#{changeset_ids.join(",")}_artifacts"
+    commit_with_artifacts = session[key_changeset_artifacts]
+    if !commit_with_artifacts
+      commit_with_artifacts = UlakTest::Git.findTagsOfCommits(issue.changesets)
+      # session[key_changeset_artifacts] = commit_with_artifacts
+    end
 
     html_content = render_to_string(
       template: "templates/_tab_content_issue_test_results.html.erb",
@@ -201,7 +217,7 @@ class IssueTestController < ApplicationController
         commit_with_artifacts: commit_with_artifacts,
         issue: issue,
         issue_id: issue_id,
-        tests: tests,
+        tests: test_cases_id_summary,
       },
     )
     render html: html_content

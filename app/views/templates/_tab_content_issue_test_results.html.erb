@@ -220,10 +220,15 @@
           <%
             caseRunStatus = ["idle","running","paused","passed","failed","blocked","error","waived"]
             caseRunStatusDescs = caseRunStatus.map { |s| l("text_test_run_status_#{s}".to_sym) }
+            puts caseRunStatusDescs
           %>
           const arrCaseRunStatus = <%== caseRunStatus %>
           console.log(">>>>> arrCaseRunStatus: ",arrCaseRunStatus)
+          <% puts caseRunStatusDescs %>
+
           const arrCaseRunStatusDescriptions = <%== caseRunStatusDescs %>
+          
+          <% puts caseRunStatusDescs %>
           
           $test_case_list.find('li').each((idx, li)=>{
             $li = $(li)
@@ -284,11 +289,12 @@
               if(lastStatusOfCaseRun == prop) $spanTestCase.find('a').after($stcr);
               else $spanTestCase.append($stcr)
             }
-
           })
+
         });
 
       });
+      
     });
 
     $('#test_result_kod_surumleri').accordion({ heightStyle: "content" });
