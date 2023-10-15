@@ -17,12 +17,13 @@
         <li>
             <b><%= package %></b> <br/>
             <%
-            package_run_ids = @kiwi_tags.select { |t| t["name"].include?(package) }.map{ |t| t["run"] }
-            package_executions = @kiwi_executions.select { |e| package_run_ids.include?(e["run"]) }
-            unless package_executions.empty?
+            # package_run_ids = @kiwi_tags.select { |t| t["name"].include?(package) }.map{ |t| t["run"] }
+            # package_executions = @kiwi_executions.select { |e| package_run_ids.include?(e["run"]) }
+            # unless package_executions.empty?
+            unless @kiwi_executions.empty?
             %>
             <ol class="test_run_list">
-                <% package_run_ids.each do |run_id| %>
+                <% @kiwi_run_ids.each do |run_id| %>
                 <li>
                     <%
                         run = @kiwi_runs.find{ |f| f["id"] == run_id }

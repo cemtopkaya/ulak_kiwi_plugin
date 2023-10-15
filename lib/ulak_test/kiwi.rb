@@ -242,7 +242,7 @@ module UlakTest
 
     # @param [Array<Integer>] case_ids Test durumu kimlik numaralarının bir dizisi
     # @return [Array] Test sürdürmelerinin bir dizisi
-    def self.fetch_testexecution_by_run_id_in_case_id_in(run_ids, case_ids)
+    def self.fetch_testexecution_by_run__id_in_case__id_in(run_ids, case_ids)
       unless run_ids.is_a?(Array)
         raise ArgumentError, "run_ids parameter must be an array"
       end
@@ -342,11 +342,65 @@ module UlakTest
       result
     end
 
+    def self.fetch_tags_by_name__in(tag_names)
+      unless tag_names.is_a?(Array)
+        raise ArgumentError, "tag_names parameter must be an array"
+      end
+
+      result = nil
+      login()
+
+      begin
+        rest = UlakTest::PluginSetting.get_kiwi_settings()
+        body = make_request_body("Tag.filter", [{ :name__in => tag_names }])
+        # HTTP isteği oluşturma
+        url = rest.fetch(:url)
+        http = create_http(url)
+
+        # POST isteği yapma
+        response = http.post(url, body.to_json, @headers)
+        result = JSON.parse(response.body)["result"]
+      rescue StandardError => e
+        puts "----- Error occurred: #{e.message}"
+      ensure
+        logout()
+      end
+
+      result
+    end
+
+    def self.fetch_tags_by_name__in_and_run__isnull(tag_names, is_run_null = false)
+      unless tag_names.is_a?(Array)
+        raise ArgumentError, "tag_names parameter must be an array"
+      end
+
+      result = nil
+      login()
+
+      begin
+        rest = UlakTest::PluginSetting.get_kiwi_settings()
+        body = make_request_body("Tag.filter", [{ :name__in => tag_names, :run__isnull => is_run_null }])
+        # HTTP isteği oluşturma
+        url = rest.fetch(:url)
+        http = create_http(url)
+
+        # POST isteği yapma
+        response = http.post(url, body.to_json, @headers)
+        result = JSON.parse(response.body)["result"]
+      rescue StandardError => e
+        puts "----- Error occurred: #{e.message}"
+      ensure
+        logout()
+      end
+
+      result
+    end
+
     # Case ID değerleri için yapılan testler
 
     # @param [Array<Integer>] case_ids Test durumu kimlik numaralarının bir dizisi
     # @return [Array] Test sürdürmelerinin bir dizisi
-    def self.fetch_runs_by_id_in(run_ids)
+    def self.fetch_runs_by_id__in(run_ids)
       unless run_ids.is_a?(Array)
         raise ArgumentError, "run_ids parameter must be an array"
       end

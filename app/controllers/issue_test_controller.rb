@@ -112,6 +112,15 @@ class IssueTestController < ApplicationController
       return render html: html_content
     end
 
+    # # Eğer kiwi erişilemezse hata dön!
+    # result = UlakTest::Kiwi.is_kiwi_accessable()
+    # if !result[:is_accessable]
+    #   @error_message = "Kiwi is not accessible...!"
+    #   render "errors/socket_error", layout: false
+    #   # render json: result
+    #   return
+    # end
+
     @cs = @issue.changesets.find_by_id(changeset_id)
 
     begin
@@ -131,27 +140,30 @@ class IssueTestController < ApplicationController
         session[key_plan_cases_id_summary] = test_cases_id_summary
       end
       # @tests = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(@test_plan_ids)
-      @test_ids = test_cases_id_summary.pluck("id")
+      @test_case_ids = test_cases_id_summary.pluck("id")
 
       @artifacts = UlakTest::Git.tag_artifacts(@cs.repository.url, tag)
       if @artifacts.empty?
         @tag_description = UlakTest::Git.tag_description(@cs.repository.url, tag)
       end
       @edited_artifacts = @artifacts.map { |a| a.end_with?(".deb") ? "#{a.split("_")[0]}=#{a.split("_")[1]}" : a }
-      result = UlakTest::Kiwi.is_kiwi_accessable()
-
-      if !result[:is_accessable]
-        render json: result
-        return
-      end
 
       # tag -> runs
-      @kiwi_tags = @edited_artifacts.map { |a| UlakTest::Kiwi.fetch_tags_by_tag_name(a) }.flatten
+      # Artifact'lerin kullanıldığı Test Koşularını bul
+      # @kiwi_tags = UlakTest::Kiwi.fetch_tags_by_name__in(@edited_artifacts)
 
-      @kiwi_run_ids = @kiwi_tags.pluck("run")
-      @kiwi_runs = UlakTest::Kiwi.fetch_runs_by_id_in(@kiwi_run_ids)
-      @kiwi_executions = UlakTest::Kiwi.fetch_testexecution_by_run_id_in_case_id_in(@kiwi_run_ids, @test_ids)
-      # executions -> run_id_in & case_id_in
+      # Bu issue için yapılan kod değişikliklerinden çıkartılan artifact'ler ile etiketlenmiş Test Koşularını getir
+      @kiwi_run_tags = UlakTest::Kiwi.fetch_tags_by_name__in_and_run__isnull(@edited_artifacts, false)
+
+      # Bu issue için yapılan kod değişikliklerinden çıkartılan artifact'ler ile etiketlenmiş Test Run ID değerleri
+      @kiwi_run_ids = @kiwi_run_tags.pluck("run")
+
+      # Test Senaryolarının koşulduğu Test Koşularının sonuçlarını, Test Execution'ları çekerek gösterime hazırla
+      # Test Plan -> Test Run -> Her Test Case ID için -> Test Executions (run_id_in & case_id_in)
+      @kiwi_executions = UlakTest::Kiwi.fetch_testexecution_by_run__id_in_case__id_in(@kiwi_run_ids, @test_case_ids)
+
+      # Kodun çıktısı için yapılan Test Koşularının ayrıntılarını, ekranda test koşusunun hangi test planı için yapıldığını göstermek için çek ()
+      @kiwi_runs = UlakTest::Kiwi.fetch_runs_by_id__in(@kiwi_run_ids)
 
       html_content = render_to_string(
         template: "templates/_tab_test_results.html.erb",
