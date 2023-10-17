@@ -1,7 +1,7 @@
 # Turkish strings go here for Rails i18n
 tr:
-  issue_test_plans: Görev Testleri
-  field_issue_test_plans: Görev Testleri
+  issue_test_plans: Test Planları
+  field_issue_test_plans: Test Planları
   text_issue_test_plans_added: EKLENEN
   text_issue_test_plans_removed: ÇIKARILAN
   text_issue_code_artifacs: Kod Çıktıları
@@ -12,8 +12,8 @@ tr:
   text_exception_occured_name: İstisna Oluştu
   no_associated_code_revision: Henüz kod güncellemesi yapılmamış
   no_associated_tests: Konuyla ilişkili test yok
-  text_sync_kiwi_tests: Eşleştir
-  button_sync_kiwi_tests: Kiwi Test Senaryolarını Eşleştir
+  text_check_kiwi_connection: Bağlantıyı Denetle
+  button_check_kiwi_connection: Kiwi Sunucu Bağlantısını Denetle
   label_issue_code_artifacts_tags: Etiketler
   option_issue_code_artifacts_choose: Bir kod çıktısı seçiniz
   text_revision_comment: Kod Revizyon Yorumu
