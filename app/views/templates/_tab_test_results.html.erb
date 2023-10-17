@@ -3,7 +3,7 @@
 </script>
 
 <%
- if @edited_artifacts.empty? %>
+ if @artifact_kiwi_tags.empty? %>
  <p>
     <em>Kod değişimi için üretilen "Git Etiketinde" bir artifact açıklaması bulunamadı!</em><br/>
     <pre><%= @tag_description %></pre>
@@ -12,26 +12,81 @@
  else
     kiwi_info = UlakTest::PluginSetting.get_kiwi_settings
 %>
+<!--
+    TP:3   REDMINE#311
+        TR:4
+            TAGS: [ cnrnrf-cnf=1.2.1 ]
+            EXECUTIONS: [
+                TC:172  -
+                TC:22   -
+            ]
+        TR:5 
+            cnrnrf-vnf=1.2.1
+                TC:172  +
+                TC:22   -
+        TR:17  
+            cnrnrf-vnf=1.2.1
+                TC:172  +
+        TR:18
+            cnrnrf-vnf=1.2.1
+                TC:172  +
+                TC:22   +
+    TP:4
+        TR:50 
+            cnrnrf-vnf=1.2.1
+                TC:172  +
+
+    Test Plan ID
+        Test Run ID
+            Artifact Adı (Paket Adı)
+                Test Execution (Test Case + Status)
+ -->
     <ol class="artifact_list">
-    <% @edited_artifacts.each do |package| %>
+    <% @artifact_kiwi_tags.each do |package| %>
         <li>
             <b><%= package %></b> <br/>
-            <%
-            # package_run_ids = @kiwi_tags.select { |t| t["name"].include?(package) }.map{ |t| t["run"] }
+        <%
+            # package_run_ids = @kiwi_run_tags.select { |t| t["name"].include?(package) }.map{ |t| t["run"] }
             # package_executions = @kiwi_executions.select { |e| package_run_ids.include?(e["run"]) }
             # unless package_executions.empty?
-            unless @kiwi_executions.empty?
-            %>
+            package_runs = @kiwi_runs.select { |r| r["tags"].include?(package) }.sort_by{ |r| -r["id"] }
+            package_runs.each do |run|
+        %>
             <ol class="test_run_list">
-                <% @kiwi_run_ids.each do |run_id| %>
                 <li>
-                    <%
-                        run = @kiwi_runs.find{ |f| f["id"] == run_id }
+                    <% 
+                        run_id = run["id"] 
+                        
+                        run_actual_duration = "Başlangıç veya bitiş tarihi eksik."
+                        start_date = run["start_date"] 
+                        stop_date = run["stop_date"] 
+                        
+                        if start_date && stop_date
+                            start_time = Time.parse(start_date)
+                            stop_time = Time.parse(stop_date)
+                            run_actual_duration = stop_time - start_time
+                        end
+
+                        puts "run_actual_duration: #{run_actual_duration}"
+
+                        run_plan = run["plan"] 
+                        background_color = @test_plan_ids.include?(run_plan) ? "seashell" : "mintcream"
+                        border_color = @test_plan_ids.include?(run_plan) ? "lawngreen" : "beige"
                     %>
-                    RUN ID: <a href='<%= "#{kiwi_info[:kiwi_url]}/runs/#{run_id}" %>' _target="_blank" title='<%=run["start_date"] %> - <%=run["end_date"] %>''><%= run_id %></a><br>
-                    PLAN: <a href='<%= "#{kiwi_info[:kiwi_url]}/plan/#{run["plan"]}" %>' _target="_blank" title='<%=run["start_date"] %>'><%= run["plan"] %> - <%=run["plan__name"] %></a><br>
+                    <div style="padding: 5px;background-color: <%=background_color %>;border-bottom: 1px solid <%=border_color %>;">
+                        <div style="float:left;width:150px;">
+                            <a href='<%= "#{kiwi_info[:kiwi_url]}/runs/#{run_id}" %>' target="_blank" title='<%= run_actual_duration %>''><%= User.current.format_time(start_date) || run_id %></a>
+                        </div>
+                        <div style="text-align:right">
+                            <%
+                                if @test_plan_ids.include?(run_plan)
+                                    %>&#10003; <%
+                                end
+                            %> <a href='<%= "#{kiwi_info[:kiwi_url]}/plan/#{run_plan}" %>' target="_blank"><%= run["plan__name"] %></a>
+                        </div>
+                    </div>
                     <ul class="test_result_list">
-                        <% @kiwi_executions.select { |e| e["run"] == run_id }.each  do |e| %>
+                        <% run["executions"].each  do |e| %>
                         <li data-case-id="<%= e["case"] %>" 
                             data-case-status="<%= e["status"] %>" 
                             data-case-status-name="<%= e["status__name"].downcase %>">
@@ -66,15 +121,14 @@
                             %>
                             <!--abbr title='<%= e["status__name"] %>'> <%= status_icon %></abbr--> 
                             <span class="c-pill c-pill--<%= status_class %>" title="<%= status_class %>">
-                                <a href='<%= "#{kiwi_info[:kiwi_url]}/case/#{e["case"]}" %>' _target="_blank"><%= e["case__summary"] %></a>
+                                <a href='<%= "#{kiwi_info[:kiwi_url]}/case/#{e["case"]}" %>' target="_blank" title='<%= UlakTest::Helper.convert_to_meaningful_duration(e["actual_duration"]) %>'><%= e["case__summary"] %></a>
                             </span>
                         </li>
                         <% end %>
                     </ul>
                 </li>
-                <% end %>
             </ol>
-            <% end %>
+        <% end %>
         </li>
     <% end %>
     </ol>

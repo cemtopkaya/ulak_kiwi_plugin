@@ -146,14 +146,14 @@ class IssueTestController < ApplicationController
       if @artifacts.empty?
         @tag_description = UlakTest::Git.tag_description(@cs.repository.url, tag)
       end
-      @edited_artifacts = @artifacts.map { |a| a.end_with?(".deb") ? "#{a.split("_")[0]}=#{a.split("_")[1]}" : a }
+      @artifact_kiwi_tags = @artifacts.map { |a| a.end_with?(".deb") ? "#{a.split("_")[0]}=#{a.split("_")[1]}" : a }
 
       # tag -> runs
       # Artifact'lerin kullanıldığı Test Koşularını bul
       # @kiwi_tags = UlakTest::Kiwi.fetch_tags_by_name__in(@edited_artifacts)
 
       # Bu issue için yapılan kod değişikliklerinden çıkartılan artifact'ler ile etiketlenmiş Test Koşularını getir
-      @kiwi_run_tags = UlakTest::Kiwi.fetch_tags_by_name__in_and_run__isnull(@edited_artifacts, false)
+      @kiwi_run_tags = UlakTest::Kiwi.fetch_tags_by_name__in_and_run__isnull(@artifact_kiwi_tags, false)
 
       # Bu issue için yapılan kod değişikliklerinden çıkartılan artifact'ler ile etiketlenmiş Test Run ID değerleri
       @kiwi_run_ids = @kiwi_run_tags.pluck("run")
@@ -164,6 +164,40 @@ class IssueTestController < ApplicationController
 
       # Kodun çıktısı için yapılan Test Koşularının ayrıntılarını, ekranda test koşusunun hangi test planı için yapıldığını göstermek için çek ()
       @kiwi_runs = UlakTest::Kiwi.fetch_runs_by_id__in(@kiwi_run_ids)
+
+      # plan: [
+      #   {
+      #     run : {
+      #         executions: [
+      #           tags : []
+      #         ]
+      #     },
+      #     ...
+      #   ]
+      # }
+      @kiwi_runs.each do |run|
+        run["tags"] = []
+        run["executions"] = []
+      end
+
+      @kiwi_executions.each do |execution|
+        execution_run_id = execution["run"]
+        run = @kiwi_runs.find { |r| r["id"] == execution_run_id }
+        run["tags"] = @kiwi_run_tags.select { |t| t["run"] == execution_run_id }.map { |tag| tag["name"] }
+        run["executions"].push(execution)
+      end
+
+      # run_ids = @kiwi_runs.pluck("run")
+      # sonuc["plan_#{plan_id}"] = @kiwi_runs.select { |item| item[:plan] == plan_id }.map { |item| item[:name] }
+
+      # sonuc = {}
+      # @kiwi_runs.each do |plan|
+      #   plan_id = plan["id"]
+      #   sonuc["plan_#{plan_id}"] = @kiwi_runs.select { |run| run["plan"] == plan_id }
+      # end
+
+      # @edited_artifacts.each do |package|
+      # end
 
       html_content = render_to_string(
         template: "templates/_tab_test_results.html.erb",

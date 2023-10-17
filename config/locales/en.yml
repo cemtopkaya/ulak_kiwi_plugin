@@ -1,9 +1,9 @@
 # English strings go here for Rails i18n
 en:
-  issue_tests: Issue Tests
-  field_issue_tests: Issue Tests
-  text_issue_tests_added: ADDED
-  text_issue_tests_removed: REMOVED
+  issue_test_plans: Issue Test Plans
+  field_issue_test_plans: Issue Test Plans
+  text_issue_test_plans_added: ADDED
+  text_issue_test_plans_removed: REMOVED
   text_issue_code_artifacs: Code Artifacts
   text_issue_test_results: Test Results
   text_git_tag_description_empty: Git tag doesn't have any description points artifacts.

@@ -1,6 +1,36 @@
 # encoding: UTF-8
 
 module UlakTest
+  module Helper
+    def self.convert_to_meaningful_duration(saniye)
+      if !saniye
+        return ""
+      end
+
+      dakika = (saniye / 60).floor
+      saniye = saniye % 60  # Kalan saniyeleri al
+
+      saat = (dakika / 60).floor
+      dakika = dakika % 60  # Kalan dakikaları al
+
+      gun = (saat / 24).floor
+      saat = saat % 24  # Kalan saatleri al
+
+      yil = (gun / 365).floor
+      gun = gun % 365  # Kalan günleri al
+
+      result = []
+
+      result << "#{yil} yıl" if yil >= 1
+      result << "#{gun} gün" if gun >= 1
+      result << "#{saat} saat" if saat >= 1
+      result << "#{dakika} dakika" if dakika >= 1
+      result << "#{saniye} saniye"
+
+      result.join(" ")
+    end
+  end
+
   module Kiwi
 
     # Test senaryolarının durumları
@@ -311,7 +341,6 @@ module UlakTest
     end
 
     # RUN ID değerleri içinde etiketleri arar
-
     # @param [String] tag_name ile etiket adı gelir
     # @param [String] Etiket adı içerisinde paket_adı=versiyonu değeri gelecek
     # @return [String]
@@ -369,6 +398,11 @@ module UlakTest
       result
     end
 
+    # Etiket isimlerinde "tag_names" dizisindeki isimler geçecek olsun ve
+    # Test Koşularında bu etiketler kullanılmış (is_run_null:false) veya kullanılmamış (is_run_null:true) olsun
+    # @param [String[]] tag_names dizisinde etiket adları olacak
+    # @param [boolean] is_run_null Etiketi "Test Koşularında" kullanılmış veya kullanılmamış olarak seç
+    # @return [String[]]
     def self.fetch_tags_by_name__in_and_run__isnull(tag_names, is_run_null = false)
       unless tag_names.is_a?(Array)
         raise ArgumentError, "tag_names parameter must be an array"

@@ -1,9 +1,9 @@
 # Turkish strings go here for Rails i18n
 tr:
-  issue_tests: Görev Testleri
-  field_issue_tests: Görev Testleri
-  text_issue_tests_added: EKLENEN
-  text_issue_tests_removed: ÇIKARILAN
+  issue_test_plans: Görev Testleri
+  field_issue_test_plans: Görev Testleri
+  text_issue_test_plans_added: EKLENEN
+  text_issue_test_plans_removed: ÇIKARILAN
   text_issue_code_artifacs: Kod Çıktıları
   text_issue_test_results: Test Sonuçları
   text_git_tag_description_empty: Etiketin açıklamasında üretilen çıktı bilgisine erişilemedi

@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require "action_view"
 include ActionView::Helpers::SanitizeHelper
 
@@ -5,7 +6,7 @@ module UlakTest
   module Hooks
     class IssueTestsField < Redmine::Hook::ViewListener
       def self.upsert_issue_test(issue_id, project, new_test_plan_ids)
-        
+
         # Check if the user is authorized to view the plugin.
         unless User.current.allowed_to?(:edit_issue_tests, project)
           # The user is not authorized to view the plugin.
@@ -14,27 +15,25 @@ module UlakTest
         end
 
         old_test_plan_ids = IssueTestPlan
-          .where(issue_id: issue_id)
+          .where(issue_id: issue_id) # encoding: UTF-8
           .select(:test_plan_id, :name)
           .pluck(:test_plan_id)
-        
-          
+
         removed_test_plan_ids = old_test_plan_ids - new_test_plan_ids
         added_test_plan_ids = new_test_plan_ids - old_test_plan_ids
-        
-        
+
         # Silinmeden önce DB'den silinenlerin journal mesajı çekiliyor
         removed_tests_journal = IssueTestPlan.where(test_plan_id: removed_test_plan_ids).pluck(:name).map { |test| "-#{test}-" }.join("\n* ")
         removed_test_plan_ids.each do |plan_id|
           IssueTestController.remove_test_from_issue(issue_id, plan_id)
         end
-        
+
         added_test_plan_ids.each do |plan_id|
           IssueTestController.add_test_to_issue(issue_id, plan_id)
         end
         # Eklendikten sonra DB'den eklenen journal mesajı çekiliyor
         added_tests_journal = IssueTestPlan.where(test_plan_id: added_test_plan_ids).pluck(:name).join("\n* ")
-        
+
         # Eklenen ve silinene test plan ID değerlerini tarihçeye de yazıyoruz
         journalize_issue_test_change(issue_id, removed_tests_journal, added_tests_journal)
       end
@@ -48,7 +47,7 @@ module UlakTest
       end
 
       def view_issues_form_details_bottom(context = {})
-        
+
         # Check if the user is authorized to view the plugin.
         unless User.current.allowed_to?(:edit_issue_tests, context[:issue].project)
           # The user is not authorized to view the plugin.
@@ -68,7 +67,7 @@ module UlakTest
         end
 
         controller = context[:controller]
-        label_field = controller.view_context.label_tag(:test_select_input, l(:issue_tests), class: "test_selec_input")
+        label_field = controller.view_context.label_tag(:test_select_input, l(:issue_test_plans), class: "test_selec_input")
         select_field = controller.view_context.select_tag(:test_select_input, options_for_select(select_options), { label: "Tests", style: "width:100%", class: "test_select_input", multiple: true })
 
         controller = context[:hook_caller].is_a?(ActionController::Base) ? context[:hook_caller] : context[:hook_caller].controller
@@ -127,11 +126,11 @@ module UlakTest
 
         result = ""
         if !added_tests_for_journal.empty?
-          result += "h5. #{l(:text_issue_tests_added)}\n\n* #{added_tests_for_journal}\n\n"
+          result += "h5. #{l(:text_issue_test_plans_added)}\n\n* #{added_tests_for_journal}\n\n"
         end
 
         if !removed_tests_for_journal.empty?
-          result += "h5. #{l(:text_issue_tests_removed)}\n\n* #{removed_tests_for_journal}"
+          result += "h5. #{l(:text_issue_test_plans_removed)}\n\n* #{removed_tests_for_journal}"
         end
 
         journal = issue.init_journal(User.current)

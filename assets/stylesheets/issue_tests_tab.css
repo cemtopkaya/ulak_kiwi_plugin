@@ -48,15 +48,18 @@ h3 > div.right{float: right;}
 }
 
 .test_run_list > li {
-    background-color: white;
-    list-style: none;
-    margin-right: 0px;
-    margin-top: 20px;
-    margin-bottom: 0px;
-    padding: 5px;
-    border-width: 1px 3px 2px 1px;
-    border-style: solid;
-    border-color: #d1d1d7;
+  background-color: white;
+  list-style: none;
+  margin-right: 0px;
+  margin-top: 20px;
+  margin-bottom: 0px;
+  border-width: 1px 3px 2px 1px;
+  border-style: solid;
+  border-color: #d1d1d7;
+  padding-top: 1px;
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: 5px;
 }
 
 .test_result_list {
