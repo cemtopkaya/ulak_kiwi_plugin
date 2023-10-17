@@ -40,7 +40,7 @@ Redmine::Plugin.register $NAME_KIWI_TESTS do
   requires_redmine :version_or_higher => "5.0.0"
 
   PLUGIN_ROOT_KIWI_TESTS = Pathname.new(__FILE__).join("..").realpath.to_s
-   yaml_settings = YAML::load(File.open(File.join(PLUGIN_ROOT_KIWI_TESTS + "/config", "settings.yml")))
+  yaml_settings = YAML::load(File.open(File.join(PLUGIN_ROOT_KIWI_TESTS + "/config", "settings.yml")))
 
   settings :default => {
     "kiwi_url" => yaml_settings["kiwi_url"],
@@ -49,17 +49,14 @@ Redmine::Plugin.register $NAME_KIWI_TESTS do
     "rest_api_password" => yaml_settings["rest_api_password"],
   }, partial: "settings/ulak_test_eklenti_settings.html"
 
-  
   project_module $NAME_KIWI_TESTS do
     # "Test Results" sekme başlığını
     permission :view_tab_issue_test_results_tab, {}
-    
+
     permission :view_issue_test_results, issue_test: :view_issue_test_results, :public => true
     permission :view_tag_runs, issue_test: :view_tag_runs, :public => true
     permission :get_issue_tests, issue_test: :get_issue_tests, :public => true
-    
-    permission :edit_issue_tests, {:issue_test => [:add_test_to_issue, :remove_test_from_issue]}, :require => :member
+
+    permission :edit_issue_tests, { :issue_test => [:add_test_to_issue, :remove_test_from_issue] }, :require => :member
   end
 end
-
-

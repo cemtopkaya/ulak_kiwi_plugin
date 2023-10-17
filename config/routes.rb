@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   get "#{$NAME_KIWI_TESTS}/tests", to: "issue_test#get_tests"
   get "#{$NAME_KIWI_TESTS}/test_plans", to: "kiwi_api#fetch_test_plans"
   get "#{$NAME_KIWI_TESTS}/test_plans/:plan_id/cases", to: "kiwi_api#fetch_test_cases_by_plan_id"
-  get "#{$NAME_KIWI_TESTS}/tests/sync", to: "kiwi_api#sync_test_cases"
+  get "#{$NAME_KIWI_TESTS}/kiwi/check", to: "kiwi_api#check_connection"
 
   # Issue Test rotaları
   get "#{$NAME_KIWI_TESTS}/issues/:issue_id/tab/test_results", to: "issue_test#view_issue_test_results"

@@ -1,4 +1,17 @@
 class KiwiApiController < ApplicationController
+  def check_connection
+    begin
+      is_accesable = UlakTest::Kiwi.is_kiwi_accessable()
+      return render json: is_accesable, status: :ok
+    rescue => e
+    end
+
+    return render json: {
+                    is_accessable: false,
+                    message: "Kiwi server is NOT accessable",
+                  }, status: :ok
+  end
+
   def sync_test_cases
     all_tests_before = Test.all
     products = UlakTest::Kiwi.fetch_products()

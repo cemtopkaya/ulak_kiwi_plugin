@@ -53,18 +53,17 @@
       </td>
     </tr>
     <tr>
-      <th><%= l(:text_sync_kiwi_tests) %></th>
+      <th><%= l(:text_check_kiwi_connection) %></th>
       <td>
         <script>
-          function syncKiwiTests() {
-            $.get("/<%= $NAME_KIWI_TESTS %>/tests/sync", function(data) {
-              console.log(data);
-              mesaj = `${data.after - data.before} Kayıt eklendi`
-              alert("Eşleştirme başarıyla tamamlandı.\n", mesaj);
+          function checkKiwiConnection() {
+            $.get("/<%= $NAME_KIWI_TESTS %>/kiwi/check", function(cnn) {
+              console.log(cnn);
+              alert(cnn.message);
             });
           }
         </script>
-        <%= button_tag l(:button_sync_kiwi_tests), type: "button", name: "btn_sync_kiwi_tests", onclick: "syncKiwiTests()" %>
+        <%= button_tag l(:button_check_kiwi_connection), type: "button", name: "button_check_kiwi_connection", onclick: "checkKiwiConnection()" %>
       </td>
     </tr>
   </tbody>

@@ -12,8 +12,8 @@ en:
   text_exception_occured: Exception Occured
   no_associated_code_revision: No code update yet
   no_associated_tests: No tests related with issue
-  text_sync_kiwi_tests: Synchronise
-  button_sync_kiwi_tests: Sync Kiwi Test Cases
+  text_check_kiwi_connection: Check Connection
+  button_check_kiwi_connection: Check Kiwi Server Connection
   label_issue_code_artifacts_tags: Tags
   option_issue_code_artifacts_choose: Choose code artifact
   text_revision_comment: Revision Comment
