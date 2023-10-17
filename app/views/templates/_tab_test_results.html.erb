@@ -69,9 +69,20 @@
 
                         puts "run_actual_duration: #{run_actual_duration}"
 
+                        border_color_not_issue_test_plan = "beige"
+                        border_color_passed = "lawngreen"
+                        border_color_failed = "IndianRed" 
+                        
                         run_plan = run["plan"] 
-                        background_color = @test_plan_ids.include?(run_plan) ? "seashell" : "mintcream"
-                        border_color = @test_plan_ids.include?(run_plan) ? "lawngreen" : "beige"
+
+                        background_color = "ghostwhite"
+                        border_color = border_color_not_issue_test_plan
+                        if @test_plan_ids.include?(run_plan)
+                            is_passed = run["executions"].pluck("status").all? { |status| status == 4 }
+                            border_color = is_passed ? border_color_passed : border_color_failed
+                            background_color = "seashell"
+                        end
+
                     %>
                     <div style="padding: 5px;background-color: <%=background_color %>;border-bottom: 1px solid <%=border_color %>;">
                         <div style="float:left;width:150px;">
