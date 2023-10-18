@@ -45,8 +45,13 @@
               <ol class="test_case_list">
                 <% tests.each do |test| %>
                   <li data-case-id='<%= test["id"] %>'>
-                    <span class="test-case c-pill c-pill--nostatus" title="<%= l(:text_test_run_status_didnt_run_with_artifact) %>">
-                        <a href='<%= "#{kiwi_info[:kiwi_url]}/case/#{test["id"]}" %>' _target="_blank"><%= test["summary"] %></a>
+                    <span class="test-case c-pill c-pill--nostatus">
+                      <% if test["is_automated"] %>
+                        <span class="fa fa-cog" title="Otomatik koşulan test"></span> 
+                      <% else  %>
+                        <span class="fa fa-hand" title="Elle koşulan test"></span> 
+                      <% end  %>
+                        <a href='<%= "#{kiwi_info[:kiwi_url]}/case/#{test["id"]}" %>' target="_blank"><%= test["summary"] %></a>
                         <span class="test-case-result idle"     title="<%= l(:text_test_run_status_idle_count) %>"    ></span>
                         <span class="test-case-result running"  title="<%= l(:text_test_run_status_running_count) %>" ></span>
                         <span class="test-case-result paused"   title="<%= l(:text_test_run_status_paused_count) %>"  ></span>
@@ -75,7 +80,8 @@
               begin
                 tag_info = UlakTest::Git.commit_tags(changeset.repository.url, changeset.identifier) 
               rescue StandartError => e 
-                javascript_tag do %>
+                javascript_tag do 
+              %>
                   alert('İstisna alındı: <%= e.message %>');
               <% end 
               end %>
@@ -150,7 +156,6 @@
           
           // nostatus stilini ayarlayıp, içine badge eklemeden tüm test senaryolarının li içeriğini sıfırlıyoruz
           $spanTestCase.addClass(`c-pill--nostatus`)
-          $spanTestCase.attr("title", caseRunNoStatusDescriptions);
 
           // badge olan span elemanlarını kaldıralım, sonradan gerekirse oluşturulur
           $spanTestCase.find('span.test-case-result').remove()

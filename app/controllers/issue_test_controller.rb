@@ -133,14 +133,14 @@ class IssueTestController < ApplicationController
       #
       @test_plan_ids = IssueTestPlan.where(issue_id: issue_id).pluck(:test_plan_id)
       key_plan_cases_id_summary = "key_issue:#{issue_id}_test_plan_ids_#{@test_plan_ids.join(",")}_test_cases_id_summary"
-      test_cases_id_summary = session[key_plan_cases_id_summary]
-      if !test_cases_id_summary
+      test_cases_id_summary_automated = session[key_plan_cases_id_summary]
+      if !test_cases_id_summary_automated
         test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(test_plan_ids)
-        test_cases_id_summary = test_cases.map { |eleman| { "id" => eleman["id"], "summary" => eleman["summary"] } }
-        session[key_plan_cases_id_summary] = test_cases_id_summary
+        test_cases_id_summary_automated = test_cases.map { |tc| { "id" => tc["id"], "summary" => tc["summary"] } }
+        session[key_plan_cases_id_summary] = test_cases_id_summary_automated
       end
       # @tests = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(@test_plan_ids)
-      @test_case_ids = test_cases_id_summary.pluck("id")
+      @test_case_ids = test_cases_id_summary_automated.pluck("id")
 
       @artifacts = UlakTest::Git.tag_artifacts(@cs.repository.url, tag)
       if @artifacts.empty?
@@ -242,11 +242,11 @@ class IssueTestController < ApplicationController
 
     # key_plan_cases = "key_issue:#{issue_id}_test_plan_ids_#{test_plan_ids.join(",")}_test_cases"
     key_plan_cases_id_summary = "key_issue:#{issue_id}_test_plan_ids_#{test_plan_ids.join(",")}_test_cases_id_summary"
-    test_cases_id_summary = session[key_plan_cases_id_summary]
-    if !test_cases_id_summary
+    test_cases_id_summary_automated = session[key_plan_cases_id_summary]
+    if !test_cases_id_summary_automated
       test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(test_plan_ids)
-      test_cases_id_summary = test_cases.map { |eleman| { "id" => eleman["id"], "summary" => eleman["summary"] } }
-      session[key_plan_cases_id_summary] = test_cases_id_summary
+      test_cases_id_summary_automated = test_cases.map { |tc| { "id" => tc["id"], "summary" => tc["summary"], "is_automated" => tc["is_automated"] } }
+      session[key_plan_cases_id_summary] = test_cases_id_summary_automated
     end
 
     #commit_with_artifacts = UlakTest::Git.commit_tags(issue.changesets)
@@ -270,7 +270,7 @@ class IssueTestController < ApplicationController
         commit_with_artifacts: commit_with_artifacts,
         issue: issue,
         issue_id: issue_id,
-        tests: test_cases_id_summary,
+        tests: test_cases_id_summary_automated,
       },
     )
     render html: html_content
