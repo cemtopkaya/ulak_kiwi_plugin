@@ -5,7 +5,8 @@ function ulak_test() {
 
   // function getRemoteTab(name, remote_url, url, load_always) {
   let name = 'test_results'
-  remote_url = `/ulak_test/${issueId}/tab/test_results`;
+  // remote_url = `/ulak_test/${issueId}/tab/test_results`;
+  remote_url = `/ulak_test/${issueId}/tab/tests`;
   url = `/issues/${issueId}?tab=test_results`;
   // Tab'ın başlığını oluşturup sekmelerin yanına yerleştirelim
   let $tabTestResultHeader = $("<a />", {

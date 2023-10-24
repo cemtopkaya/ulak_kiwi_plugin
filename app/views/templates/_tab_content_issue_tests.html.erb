@@ -1,0 +1,143 @@
+<div id="test_result_kod_surumleri">
+
+  <%== @test_plan_ids.empty? ? "<p>#{l(:no_associated_tests)}</p>" : "" %>
+  <%== @issue.changesets.empty? ? "<p>#{l(:no_associated_code_revision)}</p>" : "" %>
+
+
+  <%
+    kiwi_info = UlakTest::PluginSetting.get_kiwi_settings
+    @issue.changesets.each do |changeset| 
+  %>
+      <h3>
+        <div class="left">
+          <abbr title="<%= changeset.repository.url %>">
+            <%= "#{l(:label_revision)} #{changeset.format_identifier}" %>
+          </abbr>
+          <% if changeset.filechanges.any? && User.current.allowed_to?(:browse_repository, changeset.project) %>
+            (<%= link_to(l(:label_diff),
+                          controller: "repositories",
+                          action: "diff",
+                          id: changeset.project,
+                          repository_id: changeset.repository.identifier_param,
+                          path: "",
+                          rev: changeset.identifier) %>)
+          <% end %>
+        </div><!-- div.class="left"-->
+
+        <div class="right">
+          <div>
+            <%= avatar(changeset.user, size: "24") %>
+            <%= authoring changeset.committed_on, changeset.author, label: :label_added_time_by %>
+          </div>
+        </div><!-- div.class="right"-->
+      </h3>
+      <div id="div_revision-<%= changeset.id %>" data-changeset_id="<%= changeset.id %>" class="splitcontent" style="background-color:#e5eaef">
+        <div class="splitcontentleft">
+          <div class="wiki changeset-comments">
+            <b><%= l(:text_revision_comment) %> :</b><br/>
+            <blockquote>
+              <%= format_changeset_comments changeset %>
+            </blockquote>
+          </div>
+          
+          <!-- Test PLANLARI Buraya gelecek -->
+          <div class="test_plan_list">
+          </div>
+
+        </div><!-- /splitcontentleft -->
+
+
+
+        <div class="splitcontentright">
+
+          <!-- ETIKETLER Buraya Gelecek -->
+          <div class="changeset_tags">
+          </div>
+          
+          <div class="test_result_placeholder">
+            <!-- Test Koşuları buraya gelecek -->
+          </div>
+          
+        </div><!-- /splitcontentright -->
+
+      </div><!-- /splitcontent -->
+  <% end %>
+</div>
+
+
+<script>
+  function tabTestResults(){
+    this.accordion = "---"
+    this.viewTestPlans = undefined
+    this.changesetTags = {}
+  }
+
+  tabTestResults.prototype.makeAccordion = function(onAccordionContentExpanded){
+    this.accordion = $('#test_result_kod_surumleri').accordion({       
+      collapsible: true,
+      heightStyle: "content", 
+      active: false, // Hepsi kapalı gelsin
+      activate: onAccordionContentExpanded // Faal sekme değiştiğinde çalışsın
+    });
+
+    // Seçilmiş changeset'in ID değerini akordiyonun divine bağlı data özelliğinden okur
+    Object.defineProperty(this.accordion, 'activeTabChangesetID', {
+      get: function () {
+        return this.find('.ui-accordion-content-active').attr('data-changeset_id')
+      }
+    });
+    return this.accordion
+  };
+
+  tabTestResults.prototype.fetchTestPlans = function(){
+    console.log(">>> Test Planları çekilecek .... ")
+    const testPlanUrl = `/<%= $NAME_KIWI_TESTS %>/issues/<%=@issue.id%>/tab/test_results/test_plans`
+    let $activeCodeRevision = this.accordion.find('.ui-accordion-content-active')
+    const $testPlanList = $activeCodeRevision.find('.test_plan_list');
+
+    if (!this.viewTestPlans) {
+      $.get(testPlanUrl, data => {
+        console.log(">>> Test Planları çekildi .... ")
+        this.viewTestPlans = data
+        $testPlanList.html(this.viewTestPlans)
+      })
+    }else{
+      $testPlanList.html(this.viewTestPlans)
+    }
+    
+  }
+
+  tabTestResults.prototype.fetchTags = function(changeset_id){
+    if(!changeset_id){
+      console.log("changeset_id Boş olduğu için veri çekilmeyecek!")
+      return false
+    }
+    
+    const changesetTagsUrl = `/<%= $NAME_KIWI_TESTS %>/issues/<%=@issue.id%>/tab/test_results/changesets/${changeset_id}/tags`
+    let $activeCodeRevision = this.accordion.find('.ui-accordion-content-active')
+    let $changesetTags = $activeCodeRevision.find('.changeset_tags')
+    if (!this.changesetTags[`${changeset_id}`]) {
+      $.get(changesetTagsUrl, data => {
+        console.log(">>> Test Planları çekildi .... ")
+        this.changesetTags[`${changeset_id}`] = data
+        $changesetTags.html(this.changesetTags[`${changeset_id}`])
+      })
+    } else {
+      $changesetTags.html(this.changesetTags[`${changeset_id}`])
+    }
+  }
+
+  $(function(){
+    console.log('burda.....')
+    tab = new tabTestResults()
+    
+    function onAccordionContentExpanded(event, ui) {
+      console.log("Faal Sekme: ", ui.newHeader.text())
+      tab.fetchTestPlans()
+      console.log(tab.accordion)
+      tab.fetchTags(tab.accordion.activeTabChangesetID)
+    }
+
+    tab.makeAccordion(onAccordionContentExpanded)
+  });
+</script>

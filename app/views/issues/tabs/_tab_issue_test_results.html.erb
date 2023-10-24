@@ -1,7 +1,7 @@
 <script>
 console.log("ulak_test-> Görevin Test Sonuçları Sekmesi");
 
-$(document).ready(function () {
+$(function () {
   let issueId = <%= tab_test_results[:issue_id] %>
   let tests = <%= raw tab_test_results[:tests] %>
   let tabName = 'test_results'

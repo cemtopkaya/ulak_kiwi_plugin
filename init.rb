@@ -27,7 +27,7 @@ else
   end
 end
 
-$NAME_KIWI_TESTS = :ulak_kiwi_test_plan
+$NAME_KIWI_TESTS = :ulak_kiwi_plugin
 $PLUGIN_NAME_KIWI_TESTS = "plugin_#{$NAME_KIWI_TESTS}".to_sym
 
 Redmine::Plugin.register $NAME_KIWI_TESTS do
@@ -43,6 +43,10 @@ Redmine::Plugin.register $NAME_KIWI_TESTS do
   yaml_settings = YAML::load(File.open(File.join(PLUGIN_ROOT_KIWI_TESTS + "/config", "settings.yml")))
 
   settings :default => {
+    "jenkins_url" => yaml_settings["jenkins_url"],
+    "jenkins_job_url" => yaml_settings["jenkins_job_url"],
+    "jenkins_job_auth_token" => yaml_settings["jenkins_job_auth_token"],
+
     "kiwi_url" => yaml_settings["kiwi_url"],
     "rest_api_url" => yaml_settings["rest_api_url"],
     "rest_api_username" => yaml_settings["rest_api_username"],
@@ -53,7 +57,12 @@ Redmine::Plugin.register $NAME_KIWI_TESTS do
     # "Test Results" sekme başlığını
     permission :view_tab_issue_test_results_tab, {}
 
+    permission :view_run_test_button, issue_test: :view_run_test_button, :public => true
     permission :view_issue_test_results, issue_test: :view_issue_test_results, :public => true
+    permission :view_issue_test_plans, issue_test: :view_issue_test_plans, :public => true
+    permission :view_changeset_tags, issue_test: :view_changeset_tags, :public => true
+    permission :view_changeset_tag_artifacts_runs, issue_test: :view_changeset_tag_artifacts_runs, :public => true
+    permission :json_changeset_tags, issue_test: :json_changeset_tags, :public => true
     permission :view_tag_runs, issue_test: :view_tag_runs, :public => true
     permission :get_issue_tests, issue_test: :get_issue_tests, :public => true
 

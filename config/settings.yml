@@ -1,3 +1,6 @@
+jenkins_url: "https://jenkins-testmudurlugu.ulakhaberlesme.com.tr/"
+jenkins_job_url: "job/ROBOT/"
+jenkins_job_auth_token: "robot"
 kiwi_url: "https://kiwi-test.ulakhaberlesme.com.tr/"
 rest_api_url: "https://kiwi-test.ulakhaberlesme.com.tr/json-rpc/"
 rest_api_username: "admin.test"

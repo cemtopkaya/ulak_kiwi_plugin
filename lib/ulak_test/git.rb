@@ -16,9 +16,9 @@ module UlakTest
 
       tag_info = []
 
-      tags.each do |tag|
-        tag_date = `git -C #{git_dir} show --format=%ai --no-patch #{tag} | grep -oP '\\d{4}-\\d{2}-\\d{2} \\d{2}\:\\d{2}\:\\d{2}'`.chomp
-        tag_info << { tag: tag, date: tag_date }
+      tags.each do |tag_name|
+        tag_date = `git -C #{git_dir} show --format=%ai --no-patch #{tag_name} | grep -oP '\\d{4}-\\d{2}-\\d{2} \\d{2}\:\\d{2}\:\\d{2}'`.chomp
+        tag_info << { tag: tag_name, date: tag_date }
       end
       
       tag_info
@@ -31,10 +31,10 @@ module UlakTest
       git_cat_output
     end
 
-    def self.tag_artifacts_metadata(repository_url, tag)
+    def self.tag_artifacts_metadata(repository_url, tag_name)
       result = nil
       
-      git_cat_output = tag_description(repository_url, tag)
+      git_cat_output = tag_description(repository_url, tag_name)
 
       if git_cat_output.empty?
         return nil
@@ -60,8 +60,8 @@ module UlakTest
       result
     end
 
-    def self.tag_artifacts(repository_url, tag)
-      artifacts_metadata = tag_artifacts_metadata(repository_url, tag)
+    def self.tag_artifacts(repository_url, tag_name)
+      artifacts_metadata = tag_artifacts_metadata(repository_url, tag_name)
       artifacts = artifacts_metadata&.dig("distros")&.map { |cs| cs["artifacts"] }&.compact&.flatten || []
       artifacts
     end

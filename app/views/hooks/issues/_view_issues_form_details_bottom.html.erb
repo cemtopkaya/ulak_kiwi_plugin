@@ -13,7 +13,7 @@
 <% end %>
 
 <script>
-console.log(">>> Test seçcmek için gerekli javascript metotları....");
+console.log(">>> Test seçmek için gerekli javascript metotları....");
 
 function initSelect2() {
   
@@ -60,7 +60,7 @@ function initSelect2() {
   $select2Tests = $('#test_select_input').select2({
     multiple: true,
     minimumInputLength: 2,
-    maximumSelectionLength: 1,
+    maximumSelectionLength: 5,
     ajax: {
       url: '/<%= $NAME_KIWI_TESTS %>/test_plans',
       // url: '/<%= $NAME_KIWI_TESTS %>/tests',

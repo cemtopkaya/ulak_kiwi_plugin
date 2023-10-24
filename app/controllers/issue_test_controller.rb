@@ -90,18 +90,35 @@ class IssueTestController < ApplicationController
     render json: tests
   end
 
+  def fetch_artifact_run_tags(cs, tag_name)
+    artifacts = UlakTest::Git.tag_artifacts(cs.repository.url, tag_name)
+    if artifacts.empty?
+      tag_description = UlakTest::Git.tag_description(cs.repository.url, tag_name)
+    end
+    artifact_kiwi_tags = artifacts.map { |a| a.end_with?(".deb") ? "#{a.split("_")[0]}=#{a.split("_")[1]}" : a }
+
+    # tag -> runs
+    # Artifact'lerin kullanıldığı Test Koşularını bul
+    # Bu issue için yapılan kod değişikliklerinden çıkartılan artifact'ler ile etiketlenmiş Test Koşularını getir
+    kiwi_run_tags = UlakTest::Kiwi.fetch_tags_by_name__in_and_run__isnull(artifact_kiwi_tags, false)
+
+    return { "artifact_kiwi_tags": artifact_kiwi_tags, "kiwi_run_tags": kiwi_run_tags }
+  end
+
   # Test senaryolarının execute edilen koşuları bulur ve bu koşuların etiketlerinde geçen
   # paket_adı=versiyon değerini arar. Bulduklarını paketin olduğu test sonuçları olarak görüntüler.
-
-  def view_tag_runs
-    tag = params[:tag]
+  def view_changeset_tag_artifacts_runs
+    tag_name = params[:tag]
+    if tag_name.empty?
+      return
+    end
     changeset_id = params[:changeset_id]
     issue_id = params[:issue_id]
 
     @issue = Issue.find(issue_id)
 
     # Check if the user is authorized to view the plugin.
-    unless User.current.allowed_to?(:view_tag_runs, @issue.project)
+    unless User.current.allowed_to?(:view_changeset_tag_artifacts_runs, @issue.project)
       # The user is not authorized to view the plugin.
       Rails.logger.info(">>> #{User.current.login} does not have permission to view the Issue Edit for Kiwi Tests field, so this tab will not be created... !!!! <<<<")
       @error_message = "Kullanıcının bu bilgiye erişme yetkisi yok!"
@@ -121,9 +138,9 @@ class IssueTestController < ApplicationController
     #   return
     # end
 
-    @cs = @issue.changesets.find_by_id(changeset_id)
-
     begin
+      @cs = @issue.changesets.find_by_id(changeset_id)
+
       # issue ile ilişkili Test Plan'ını çek
       # Test Plan'ına bağlı Test Case'leri çek
       #
@@ -132,72 +149,63 @@ class IssueTestController < ApplicationController
       #
       #
       @test_plan_ids = IssueTestPlan.where(issue_id: issue_id).pluck(:test_plan_id)
-      key_plan_cases_id_summary = "key_issue:#{issue_id}_test_plan_ids_#{@test_plan_ids.join(",")}_test_cases_id_summary"
-      test_cases_id_summary_automated = session[key_plan_cases_id_summary]
-      if !test_cases_id_summary_automated
-        test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(test_plan_ids)
-        test_cases_id_summary_automated = test_cases.map { |tc| { "id" => tc["id"], "summary" => tc["summary"] } }
-        session[key_plan_cases_id_summary] = test_cases_id_summary_automated
-      end
-      # @tests = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(@test_plan_ids)
-      @test_case_ids = test_cases_id_summary_automated.pluck("id")
-
-      @artifacts = UlakTest::Git.tag_artifacts(@cs.repository.url, tag)
-      if @artifacts.empty?
-        @tag_description = UlakTest::Git.tag_description(@cs.repository.url, tag)
-      end
-      @artifact_kiwi_tags = @artifacts.map { |a| a.end_with?(".deb") ? "#{a.split("_")[0]}=#{a.split("_")[1]}" : a }
 
       # tag -> runs
       # Artifact'lerin kullanıldığı Test Koşularını bul
-      # @kiwi_tags = UlakTest::Kiwi.fetch_tags_by_name__in(@edited_artifacts)
-
-      # Bu issue için yapılan kod değişikliklerinden çıkartılan artifact'ler ile etiketlenmiş Test Koşularını getir
-      @kiwi_run_tags = UlakTest::Kiwi.fetch_tags_by_name__in_and_run__isnull(@artifact_kiwi_tags, false)
+      sonuclar = fetch_artifact_run_tags(@cs, tag_name)
+      @artifact_kiwi_tags = sonuclar[:artifact_kiwi_tags]
+      @kiwi_run_tags = sonuclar[:kiwi_run_tags]
 
       # Bu issue için yapılan kod değişikliklerinden çıkartılan artifact'ler ile etiketlenmiş Test Run ID değerleri
       @kiwi_run_ids = @kiwi_run_tags.pluck("run")
 
-      # Test Senaryolarının koşulduğu Test Koşularının sonuçlarını, Test Execution'ları çekerek gösterime hazırla
-      # Test Plan -> Test Run -> Her Test Case ID için -> Test Executions (run_id_in & case_id_in)
-      @kiwi_executions = UlakTest::Kiwi.fetch_testexecution_by_run__id_in_case__id_in(@kiwi_run_ids, @test_case_ids)
+      # her test test plan id değeri için tüm test senaryolarını çekelim
+      @kiwi_runs = UlakTest::Kiwi.fetch_testrun_by_id__in_plan__in(@kiwi_run_ids, @test_plan_ids)
 
-      # Kodun çıktısı için yapılan Test Koşularının ayrıntılarını, ekranda test koşusunun hangi test planı için yapıldığını göstermek için çek ()
-      @kiwi_runs = UlakTest::Kiwi.fetch_runs_by_id__in(@kiwi_run_ids)
-
+      # plan :
+      #      -> cases
+      #      -> runs:
+      #             -> tags
+      #             -> executions
+      #
       # plan: [
       #   {
-      #     run : {
+      #     cases : { .. }
+      #     runs : [
+      #       {
       #         executions: [
       #           tags : []
       #         ]
-      #     },
-      #     ...
-      #   ]
-      # }
-      @kiwi_runs.each do |run|
-        run["tags"] = []
-        run["executions"] = []
+      #       }, ...
+      #     ]
+      #   }, ...
+      # ]
+      #
+      # Planların içinde dön
+      #   Her plan'ın koşularını bul
+      #     Her koşunun etiketini bul ve ilişkilendir
+
+      @test_plans_all = {}
+
+      @test_plan_ids.each do |plan_id|
+        # Plan's CASES
+        test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_id(plan_id)
+
+        # Plan's RUNS
+        plan_runs = @kiwi_runs.select { |r| r["plan"] == plan_id }
+
+        # Run's TAGS
+        test_case_ids = test_cases.pluck("id")
+        plan_run_ids = plan_runs.pluck("id")
+        plan_runs_executions = UlakTest::Kiwi.fetch_testexecution_by_run__id_in_case__id_in(plan_run_ids, test_case_ids)
+        plan_runs.each do |run|
+          run_id = run["id"]
+          run["tags"] = @kiwi_run_tags.select { |tag| tag["run"] == run_id }.pluck("name")
+
+          # Run's EXECUTIONS
+          run["executions"] = plan_runs_executions.select { |e| e["run"] == run_id }
+        end
       end
-
-      @kiwi_executions.each do |execution|
-        execution_run_id = execution["run"]
-        run = @kiwi_runs.find { |r| r["id"] == execution_run_id }
-        run["tags"] = @kiwi_run_tags.select { |t| t["run"] == execution_run_id }.map { |tag| tag["name"] }
-        run["executions"].push(execution)
-      end
-
-      # run_ids = @kiwi_runs.pluck("run")
-      # sonuc["plan_#{plan_id}"] = @kiwi_runs.select { |item| item[:plan] == plan_id }.map { |item| item[:name] }
-
-      # sonuc = {}
-      # @kiwi_runs.each do |plan|
-      #   plan_id = plan["id"]
-      #   sonuc["plan_#{plan_id}"] = @kiwi_runs.select { |run| run["plan"] == plan_id }
-      # end
-
-      # @edited_artifacts.each do |package|
-      # end
 
       html_content = render_to_string(
         template: "templates/_tab_test_results.html.erb",
@@ -216,6 +224,87 @@ class IssueTestController < ApplicationController
       @error_message = "#{l(:text_exception_name)}: #{e.message}"
       render "errors/error", layout: false
     end
+  end
+
+  def json_changeset_tags
+    issue_id = params[:issue_id]
+    changeset_id = params[:changeset_id]
+
+    issue = Issue.find(issue_id)
+
+    # Check if the user is authorized to view the plugin.
+    unless User.current.allowed_to?(:json_changeset_tags, issue.project)
+      # The user is not authorized to view the plugin.
+      Rails.logger.info(">>> #{User.current.login} does not have permission to view the Issue Test Plans... !!!! <<<<")
+      @error_message = "Kullanıcının bu bilgiye erişme yetkisi yok!"
+      html_content = render_to_string(
+        template: "errors/401",
+        layout: false,
+      )
+      return render html: html_content
+    end
+
+    changeset = issue.changesets.find_by_id(changeset_id)
+    tag_info = UlakTest::Git.commit_tags(changeset.repository.url, changeset.identifier)
+    return render json: tag_info
+  end
+
+  def view_changeset_tags
+    @issue_id = params[:issue_id]
+    @changeset_id = params[:changeset_id]
+
+    @issue = Issue.find(@issue_id)
+
+    # Check if the user is authorized to view the plugin.
+    unless User.current.allowed_to?(:view_changeset_tags, @issue.project)
+      # The user is not authorized to view the plugin.
+      Rails.logger.info(">>> #{User.current.login} does not have permission to view the Issue Test Plans... !!!! <<<<")
+      @error_message = "Kullanıcının bu bilgiye erişme yetkisi yok!"
+      html_content = render_to_string(
+        template: "errors/401",
+        layout: false,
+      )
+      return render html: html_content
+    end
+
+    html_content = render_to_string(
+      template: "templates/_content_issue_changeset_tags.html.erb",
+      # layout: false ile tüm Redmine sayfasının derlenMEmesini sağlarız
+      layout: false,
+    )
+    render html: html_content
+  end
+
+  def view_issue_test_plans
+    issue_id = params[:issue_id]
+    issue = Issue.find(issue_id)
+
+    # Check if the user is authorized to view the plugin.
+    unless User.current.allowed_to?(:view_issue_test_plans, issue.project)
+      # The user is not authorized to view the plugin.
+      Rails.logger.info(">>> #{User.current.login} does not have permission to view the Issue Test Plans... !!!! <<<<")
+      @error_message = "Kullanıcının bu bilgiye erişme yetkisi yok!"
+      html_content = render_to_string(
+        template: "errors/401",
+        layout: false,
+      )
+      return render html: html_content
+    end
+
+    @issue_test_plans = IssueTestPlan.where(issue_id: issue_id)
+    if !@issue_test_plans
+      Rails.logger.info(">>> Redmine görevine ait bir test planı bulunamadı! <<<<")
+      return
+    end
+
+    test_plan_ids = @issue_test_plans.pluck(:test_plan_id)
+
+    html_content = render_to_string(
+      template: "templates/_content_issue_test_plans.html.erb",
+      # layout: false ile tüm Redmine sayfasının derlenMEmesini sağlarız
+      layout: false,
+    )
+    render html: html_content
   end
 
   def view_issue_test_results
@@ -272,6 +361,20 @@ class IssueTestController < ApplicationController
         issue_id: issue_id,
         tests: test_cases_id_summary_automated,
       },
+    )
+    render html: html_content
+  end
+
+  def view_issue_tests
+    @issue_id = params[:issue_id]
+    @issue = Issue.find(@issue_id)
+    @test_plan_ids = IssueTestPlan.where(issue_id: @issue_id).pluck(:test_plan_id)
+
+    html_content = render_to_string(
+      template: "templates/_tab_content_issue_tests.html.erb",
+      # layout: false ile tüm Redmine sayfasının derlenMEmesini sağlarız
+      layout: false,
+      locals: {},
     )
     render html: html_content
   end

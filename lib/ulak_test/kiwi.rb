@@ -431,7 +431,6 @@ module UlakTest
     end
 
     # Case ID değerleri için yapılan testler
-
     # @param [Array<Integer>] case_ids Test durumu kimlik numaralarının bir dizisi
     # @return [Array] Test sürdürmelerinin bir dizisi
     def self.fetch_runs_by_id__in(run_ids)
@@ -445,6 +444,37 @@ module UlakTest
       begin
         rest = UlakTest::PluginSetting.get_kiwi_settings()
         body = make_request_body("TestRun.filter", [{ :id__in => run_ids }])
+
+        # HTTP isteği oluşturma
+        url = rest.fetch(:url)
+        http = create_http(url)
+
+        # POST isteği yapma
+        response = http.post(url, body.to_json, @headers)
+        result = JSON.parse(response.body)["result"]
+      rescue StandardError => e
+        puts "----- Error occurred: #{e.message}"
+      ensure
+        logout()
+      end
+
+      result
+    end
+
+    # PLAN ID değerleri için yapılan test koşuları
+    # @param [Array<Integer>] case_ids Test durumu kimlik numaralarının bir dizisi
+    # @return [Array] Test sürdürmelerinin bir dizisi
+    def self.fetch_testrun_by_id__in_plan__in(run_ids, plan_ids)
+      unless plan_ids.is_a?(Array) and run_ids.is_a?(Array)
+        raise ArgumentError, "plan_ids, run_ids parameters must be an array"
+      end
+
+      result = nil
+      login()
+
+      begin
+        rest = UlakTest::PluginSetting.get_kiwi_settings()
+        body = make_request_body("TestRun.filter", [{ :id__in => run_ids, :plan__in => plan_ids }])
 
         # HTTP isteği oluşturma
         url = rest.fetch(:url)
