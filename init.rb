@@ -57,12 +57,11 @@ Redmine::Plugin.register $NAME_KIWI_TESTS do
     # "Test Results" sekme başlığını
     permission :view_tab_issue_test_results_tab, {}
 
+    # Testleri koşturmak için düğmeye yetki verilmeli
     permission :view_run_test_button, issue_test: :view_run_test_button, :public => true
-    permission :view_issue_test_results, issue_test: :view_issue_test_results, :public => true
     permission :view_issue_test_plans, issue_test: :view_issue_test_plans, :public => true
     permission :view_changeset_tags, issue_test: :view_changeset_tags, :public => true
     permission :view_changeset_tag_artifacts_runs, issue_test: :view_changeset_tag_artifacts_runs, :public => true
-    permission :json_changeset_tags, issue_test: :json_changeset_tags, :public => true
     permission :view_tag_runs, issue_test: :view_tag_runs, :public => true
     permission :get_issue_tests, issue_test: :get_issue_tests, :public => true
 

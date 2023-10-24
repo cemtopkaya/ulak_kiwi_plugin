@@ -68,28 +68,6 @@ class IssueTestController < ApplicationController
     render json: formatted_tests, status: :ok
   end
 
-  def get_tests
-    issue_id = params[:issue_id]
-    q = params[:q]
-
-    if q
-      tests = Test
-      # .joins(:issue_tests)
-      # .where(issue_tests: { issue_id: issue_id })
-        .where("tests.summary LIKE ?", "%#{q}%")
-        .select(:id, :summary) # Sadece testin id ve summary alanlarını seçiyoruz
-    else
-      tests = Test
-      # .joins(:issue_tests)
-      # .where(issue_tests: { issue_id: issue_id })
-        .where("tests.summary LIKE ?", "%#{q}%")
-        .select(:id, :summary) # Sadece testin id ve summary alanlarını seçiyoruz
-    end
-    puts tests.to_sql
-
-    render json: tests
-  end
-
   def fetch_artifact_run_tags(cs, tag_name)
     artifacts = UlakTest::Git.tag_artifacts(cs.repository.url, tag_name)
     if artifacts.empty?
@@ -226,29 +204,6 @@ class IssueTestController < ApplicationController
     end
   end
 
-  def json_changeset_tags
-    issue_id = params[:issue_id]
-    changeset_id = params[:changeset_id]
-
-    issue = Issue.find(issue_id)
-
-    # Check if the user is authorized to view the plugin.
-    unless User.current.allowed_to?(:json_changeset_tags, issue.project)
-      # The user is not authorized to view the plugin.
-      Rails.logger.info(">>> #{User.current.login} does not have permission to view the Issue Test Plans... !!!! <<<<")
-      @error_message = "Kullanıcının bu bilgiye erişme yetkisi yok!"
-      html_content = render_to_string(
-        template: "errors/401",
-        layout: false,
-      )
-      return render html: html_content
-    end
-
-    changeset = issue.changesets.find_by_id(changeset_id)
-    tag_info = UlakTest::Git.commit_tags(changeset.repository.url, changeset.identifier)
-    return render json: tag_info
-  end
-
   def view_changeset_tags
     @issue_id = params[:issue_id]
     @changeset_id = params[:changeset_id]
@@ -303,64 +258,6 @@ class IssueTestController < ApplicationController
       template: "templates/_content_issue_test_plans.html.erb",
       # layout: false ile tüm Redmine sayfasının derlenMEmesini sağlarız
       layout: false,
-    )
-    render html: html_content
-  end
-
-  def view_issue_test_results
-    issue_id = params[:issue_id]
-    issue = Issue.find(issue_id)
-
-    # Check if the user is authorized to view the plugin.
-    unless User.current.allowed_to?(:view_issue_test_results, issue.project)
-      # The user is not authorized to view the plugin.
-      Rails.logger.info(">>> #{User.current.login} does not have permission to view the Issue Edit for Kiwi Tests field, so this tab will not be created... !!!! <<<<")
-      @error_message = "Kullanıcının bu bilgiye erişme yetkisi yok!"
-      html_content = render_to_string(
-        template: "errors/401",
-        layout: false,
-      )
-      return render html: html_content
-    end
-
-    test_plan_ids = IssueTestPlan.where(issue_id: issue_id).pluck(:test_plan_id)
-    if !test_plan_ids
-      Rails.logger.info(">>> Redmine görevine ait bir test planı bulunamadı! <<<<")
-      return
-    end
-
-    # key_plan_cases = "key_issue:#{issue_id}_test_plan_ids_#{test_plan_ids.join(",")}_test_cases"
-    key_plan_cases_id_summary = "key_issue:#{issue_id}_test_plan_ids_#{test_plan_ids.join(",")}_test_cases_id_summary"
-    test_cases_id_summary_automated = session[key_plan_cases_id_summary]
-    if !test_cases_id_summary_automated
-      test_cases = UlakTest::Kiwi.fetch_test_cases_by_plan_ids(test_plan_ids)
-      test_cases_id_summary_automated = test_cases.map { |tc| { "id" => tc["id"], "summary" => tc["summary"], "is_automated" => tc["is_automated"] } }
-      session[key_plan_cases_id_summary] = test_cases_id_summary_automated
-    end
-
-    #commit_with_artifacts = UlakTest::Git.commit_tags(issue.changesets)
-    changeset_ids = issue.changesets.pluck("id")
-
-    # Bu veriyi session içinde tutunca CookiesOverflow hatası alıyorum çünkü
-    # session verisini cookie içine yazmaya çalışıyor ve bu da hataya neden oluyor.
-    # çözüm için https://www.redmineup.com/pages/help/getting-started/how-to-fix-cookiesoverflow-error
-    key_changeset_artifacts = "key_issue:#{issue_id}_chanageset_ids_#{changeset_ids.join(",")}_artifacts"
-    commit_with_artifacts = session[key_changeset_artifacts]
-    if !commit_with_artifacts
-      commit_with_artifacts = UlakTest::Git.findTagsOfCommits(issue.changesets)
-      # session[key_changeset_artifacts] = commit_with_artifacts
-    end
-
-    html_content = render_to_string(
-      template: "templates/_tab_content_issue_test_results.html.erb",
-      # layout: false ile tüm Redmine sayfasının derlenMEmesini sağlarız
-      layout: false,
-      locals: {
-        commit_with_artifacts: commit_with_artifacts,
-        issue: issue,
-        issue_id: issue_id,
-        tests: test_cases_id_summary_automated,
-      },
     )
     render html: html_content
   end

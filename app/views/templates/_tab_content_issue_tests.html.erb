@@ -95,20 +95,20 @@
     let $activeCodeRevision = this.accordion.find('.ui-accordion-content-active')
     const $testPlanList = $activeCodeRevision.find('.test_plan_list');
 
-    if (!this.viewTestPlans) {
+    if (this.viewTestPlans) {
+      $testPlanList.html(this.viewTestPlans)
+    } else {
       $.get(testPlanUrl, data => {
         console.log(">>> Test Planları çekildi .... ")
         this.viewTestPlans = data
         $testPlanList.html(this.viewTestPlans)
       })
-    }else{
-      $testPlanList.html(this.viewTestPlans)
     }
     
   }
 
   tabTestResults.prototype.fetchTags = function(changeset_id){
-    if(!changeset_id){
+    if(!changeset_id) {
       console.log("changeset_id Boş olduğu için veri çekilmeyecek!")
       return false
     }
@@ -116,14 +116,14 @@
     const changesetTagsUrl = `/<%= $NAME_KIWI_TESTS %>/issues/<%=@issue.id%>/tab/test_results/changesets/${changeset_id}/tags`
     let $activeCodeRevision = this.accordion.find('.ui-accordion-content-active')
     let $changesetTags = $activeCodeRevision.find('.changeset_tags')
-    if (!this.changesetTags[`${changeset_id}`]) {
+    if (this.changesetTags[`${changeset_id}`]) {
+      $changesetTags.html(this.changesetTags[`${changeset_id}`])
+    } else {
       $.get(changesetTagsUrl, data => {
         console.log(">>> Test Planları çekildi .... ")
         this.changesetTags[`${changeset_id}`] = data
         $changesetTags.html(this.changesetTags[`${changeset_id}`])
       })
-    } else {
-      $changesetTags.html(this.changesetTags[`${changeset_id}`])
     }
   }
 
