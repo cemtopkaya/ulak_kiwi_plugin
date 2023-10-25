@@ -20,7 +20,7 @@
           </a>
           <% end %>
           <br>
-          <ol class="test_case_list">
+          <ol class="test_case_list" data-plan-id='<%= plan["test_plan_id"] %>'>
             <% test_cases.each do |test| %>
               <li data-case-id='<%= test["id"] %>'>
                 <span class="test-case c-pill c-pill--nostatus">
@@ -47,3 +47,6 @@
     </ol>
   <% end %>
 </div>
+
+<script>
+</script>

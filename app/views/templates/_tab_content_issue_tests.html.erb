@@ -72,6 +72,37 @@
     this.changesetTags = {}
   }
 
+  tabTestResults.prototype.resetCaseStatuses = function () {
+    console.log('Test Planları içindeki Case durumları sıfırlanıyor...')
+    // <ol class="test_case_list">
+    //   <li data-case-id="6">
+    //     <span class="test-case c-pill" title="...>
+    //       <a href="https://kiwi-test....>TC - 002- Periyodik Kayıtlanma</a>
+    //       <span class="test-case-result idle"....
+    //       <span class="test-case-result running"....
+    // ".test_case_list" içindeki tüm <li> elemanlarını seçin ve bir döngüye sokun
+    $("ol.test_case_list").find('li').each(function() {
+      let $li = $(this)
+      // <li> elemanı içindeki <span class="test-case c-pill" title="Test senaryosu koşusundan VAZGEÇİLDİ"> elemanını seçin
+      let $spanTestCase = $li.find('span.test-case');
+      // <span> elemanının sınıflarını alın ve dizi olarak kaydedin ("test-case c-pill")
+      let classList = $spanTestCase.attr('class').split(' ');
+
+      // c-pill--*** ile başlayan ve eklenmiş olan class isimlerini sil
+      $spanTestCase.removeClass(function(index, className) {
+        // className değişkeni, elemanın tüm sınıflarını içeren bir dizedir
+        // Sınıf adı "c-pill--" ile başlayanları boşlukla birleştir ve silinecek sınıflar olarak dön
+        return (className.match(/\bc-pill--\S+/g) || []).join(' ');
+      });
+      
+      // nostatus stilini ayarlayıp, içine badge eklemeden tüm test senaryolarının li içeriğini sıfırlıyoruz
+      $spanTestCase.addClass(`c-pill--nostatus`)
+
+      // badge olan span elemanlarını kaldıralım, sonradan gerekirse oluşturulur
+      $spanTestCase.find('span.test-case-result').remove()
+    });
+  }
+
   tabTestResults.prototype.makeAccordion = function(onAccordionContentExpanded){
     this.accordion = $('#test_result_kod_surumleri').accordion({       
       collapsible: true,
@@ -108,6 +139,7 @@
   }
 
   tabTestResults.prototype.fetchTags = function(changeset_id){
+    console.log(">>>-----------------")
     if(!changeset_id) {
       console.log("changeset_id Boş olduğu için veri çekilmeyecek!")
       return false
@@ -123,19 +155,186 @@
         console.log(">>> Test Planları çekildi .... ")
         this.changesetTags[`${changeset_id}`] = data
         $changesetTags.html(this.changesetTags[`${changeset_id}`])
+        console.log($changesetTags.find("select"))
       })
     }
   }
+
+  tabTestResults.prototype.fetchTestRuns = function(select_id, changeset_id, selected_tag){
+    const url = `/<%= $NAME_KIWI_TESTS %>/issues/<%=@issue_id%>/tab/test_results/changesets/${changeset_id}/tags/runs?tag=${selected_tag}`
+    $.get( url, function( data ) {
+        console.log(">>> TAG seçildi .... ");
+        $('div.test_run_list').each(function(idx, div){
+          $(div).html('')
+        })
+
+        tab.resetCaseStatuses()
+        console.log(">>> Case status temizlendi...")
+
+        // Seçilen <select> hariç diğerlerini bul ve sıfırla yani hiç seçim yapılmamış hale getir
+        $(`[id^="select_tag_revision-"]:not(#${select_id})`).each(function(idx, select){
+          $(select).val('').trigger('change');
+        })
+
+        $ph_test_result = $(`#${select_id}`).parent().find('div.test_result_placeholder')
+        $ph_test_result && $ph_test_result.hide().html( data ).slideDown( 'slow', function() {
+
+          console.log(">>> Sekme açılıyor...")
+          debugger
+
+          const createCaseObjectArray = function(){
+            result = []
+            $(".test_result_list li").each((idx, li)=>{
+                $li = $(li)
+                plan_id = $li.data("plan-id")
+                case_id = $li.data("case-id")
+                case_run_status_name = $li.data("case-status-name")
+                result.push({ plan_id, case_id, case_run_status_name })
+            })
+            return result
+          }
+          const groupByCaseRunStatus = function(arrCases){
+            const groupedData = {};
+
+            // Dizideki her bir nesne için işlem yapın
+            arrCases.forEach(item => {
+              const { plan_id, case_id, case_run_status_name } = item;
+
+              // Gruplama yapmak için 'case_id' anahtarını kullanın
+              if (!groupedData[plan_id]) {
+                groupedData[plan_id] = {}
+              }
+
+              if (!groupedData[plan_id][case_id]) {
+                // Eğer 'case_id' anahtarı henüz oluşturulmamışsa, yeni bir nesne oluşturun
+                groupedData[plan_id][case_id] = {
+                  idle: 0,
+                  running: 0,
+                  paused: 0,
+                  passed: 0,
+                  failed: 0,
+                  blocked: 0,
+                  error: 0,
+                  waived: 0,
+                };
+              }
+
+              // İlgili 'case_run_status_name' alanını artırın
+              groupedData[plan_id][case_id][case_run_status_name]++;
+            });
+
+            return groupedData;
+          }
+
+          const arrCasesOfAllRuns = createCaseObjectArray()
+          /*
+          groupedData = 
+            {
+              "6":{"idle":1,"running":0,"paused":0,"passed":1,"failed":0,"blocked":0,"error":0,"waived":1},
+              "7":{"idle":0,"running":0,"paused":1,"passed":1,"failed":0,"blocked":0,"error":0,"waived":0},
+              "8":{"idle":0,"running":1,"paused":0,"passed":0,"failed":0,"blocked":0,"error":0,"waived":0},
+              "9":{"idle":0,"running":0,"paused":0,"passed":0,"failed":0,"blocked":1,"error":0,"waived":0},
+              "10":{"idle":0,"running":0,"paused":0,"passed":0,"failed":0,"blocked":0,"error":1,"waived":0},
+              "11":{"idle":0,"running":0,"paused":0,"passed":0,"failed":1,"blocked":0,"error":0,"waived":0},
+              "16":{"idle":1,"running":0,"paused":0,"passed":0,"failed":0,"blocked":0,"error":0,"waived":0},
+              "17":{"idle":0,"running":0,"paused":0,"passed":0,"failed":0,"blocked":0,"error":0,"waived":1}
+            }
+          */
+          const groupedData = groupByCaseRunStatus(arrCasesOfAllRuns)
+          
+          tab.colorizePlanCases(groupedData)
+        });
+
+      });
+      
+  }
+
+  tabTestResults.prototype.colorizePlanCases = function(groupedData){
+    
+    <%
+      caseRunStatus = ["idle","running","paused","passed","failed","blocked","error","waived"]
+      caseRunStatusDescs = caseRunStatus.map { |s| l("text_test_run_status_#{s}".to_sym) }
+    %>
+    const arrCaseRunStatus = <%== caseRunStatus %>
+    const arrCaseRunStatusDescriptions = <%== caseRunStatusDescs %>
+    
+    $("ol.test_case_list").find('li').each((idx, li)=>{
+      debugger
+      planId = li.parentElement.attributes['data-plan-id'].value
+      $li = $(li)
+      $spanTestCase = $li.find('span.test-case').eq(0)
+      caseId = $li.data('case-id')
+      // caseId = 6 için gruplanmış test sonuçları {"idle":1,"running":0,"paused":0,"passed":1,"failed":0,"blocked":0,"error":0,"waived":1}
+      caseStatuses = groupedData[planId][caseId]
+      /*
+        koşularda bu test senaryosu: 
+        - varsa son koşudaki test sonucuna göre stil verilecek
+        arrCasesOfAllRuns.find(a=>a.case_id == caseId)
+            {case_id: 6, case_run_status_name: 'waived'}
+        - yoksa "c-pill--nostatus" ile beyaz arka planda 
+        ve içinde <span class="test-case-result ..."> elemanları olmayacak.
+      */
+      liCaseLastStatus = plan_case_results[planId].find(a=>a.case == caseId)
+
+      if ( !liCaseLastStatus ) {
+        return true; // continue yerine true kullanılır
+      }
+
+      /* 
+          li elemanında görüntülenen test senaryosunun son RUN'da ki sonucu, 
+          badge listesinin en başına koyalım ki float:right yapınca en sonuna geçsin ve okuması kolay olsun
+          li
+            a
+            span.test-case
+              span.test-case-result.passed > 1
+              span.test-case-result.idle   > 1
+              span.test-case-result.waived > 1   << lastStatusOfCaseRun değeri waived olsun
+      */
+      lastStatusOfCaseRun = liCaseLastStatus['status__name'].toLowerCase()
+
+      // c-pill--*** ile başlayan ve eklenmiş olan class isimlerini sil
+      $spanTestCase.removeClass(function(index, className) {
+        // className değişkeni, elemanın tüm sınıflarını içeren bir dizedir
+        // Sınıf adı "c-pill--" ile başlayanları boşlukla birleştir ve silinecek sınıflar olarak dön
+        return (className.match(/\bc-pill--\S+/g) || []).join(' ');
+      });
+
+      // li > span.test-case için son test sonucunun stilini oluşturuyoruz
+      $spanTestCase.addClass(`c-pill--${lastStatusOfCaseRun}`)
+      $spanTestCase.attr("title", arrCaseRunStatusDescriptions[arrCaseRunStatus.indexOf(lastStatusOfCaseRun)]);
+        
+      /* 
+        property bilgilerinin 0'dan farklı değeri olanları için badge elemanlarını ekleyelim:
+          {"idle":1,"running":0,"paused":0,"passed":1,"failed":0,"blocked":0,"error":0,"waived":1}
+      */
+      for (const prop in caseStatuses) {
+        console.log(prop)
+        const statusCountOfTestCase = caseStatuses[prop]
+        const statusTitle = arrCaseRunStatusDescriptions[arrCaseRunStatus.indexOf(prop)]
+        // Eğer test senaryosu için örneğin skipped:0 ise badge oluşturmadan bir sonrakine geç.
+        if(!statusCountOfTestCase) continue
+
+        let $stcr = $(`<span class="test-case-result ${prop}" title="${statusTitle}">${statusCountOfTestCase}</span>`)
+        // Eğer son başarılı test koşusunun durumunu işliyorsak bu badge en başa gelmeli
+        if(lastStatusOfCaseRun == prop) $spanTestCase.find('a').after($stcr);
+        else $spanTestCase.append($stcr)
+      }
+    })
+  }
+
+  var tab = undefined
 
   $(function(){
     console.log('burda.....')
     tab = new tabTestResults()
     
     function onAccordionContentExpanded(event, ui) {
-      console.log("Faal Sekme: ", ui.newHeader.text())
-      tab.fetchTestPlans()
-      console.log(tab.accordion)
-      tab.fetchTags(tab.accordion.activeTabChangesetID)
+      if ( ui.newPanel.length ) {
+        console.log("Faal Sekme: ", ui.newHeader.text())
+        tab.fetchTestPlans()
+        console.log(tab.accordion)
+        tab.fetchTags(tab.accordion.activeTabChangesetID)      
+      }
     }
 
     tab.makeAccordion(onAccordionContentExpanded)

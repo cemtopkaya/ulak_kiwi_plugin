@@ -42,6 +42,32 @@
                 Test Execution (Test Case + Status)
  -->
     <ol class="artifact_list">
+    <% 
+    result = {}
+
+    @kiwi_runs.sort {|r| r["id"] }.each do |run|
+      plan_id = run["plan"]
+      executions = run["executions"]
+    
+      # Plan adı için boş bir dizi oluştur
+      result[plan_id] ||= [] 
+    
+      executions.sort {|r| r["id"] }.each do |execution|
+        case_id = execution["case"]
+        status = execution["status"]
+        status__name = execution["status__name"]
+    
+        # Bu planın altında ilgili case ve status bilgilerini ekleyin
+        result[plan_id] << { "case": case_id, "status": status, "status__name": status__name } unless result[plan_id].any? { |entry| entry[:case] == case_id }
+      end
+    end
+
+    puts result
+    %>
+    <script>
+        var plan_case_results = <%= result.to_json.html_safe %>
+        var kiwi_runs = <%= @kiwi_runs.group_by {|run| run["plan"]}.to_json.html_safe %>
+    </script>
     <% @artifact_kiwi_tags.each do |package| %>
         <li>
             <b><%= package %></b> <br/>
@@ -98,7 +124,9 @@
                     </div>
                     <ul class="test_result_list">
                         <% run["executions"].each  do |e| %>
-                        <li data-case-id="<%= e["case"] %>" 
+                        <li data-plan-id="<%= run["plan"] %>"
+                            data-run-id="<%= run["id"] %>"
+                            data-case-id="<%= e["case"] %>" 
                             data-case-status="<%= e["status"] %>" 
                             data-case-status-name="<%= e["status__name"].downcase %>">
                             <% case e["status"]
