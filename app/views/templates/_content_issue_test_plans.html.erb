@@ -13,7 +13,7 @@
           <b><%= plan["name"] %></b>
           <% if User.current.allowed_to?(:view_run_test_button, Issue.find(params[:issue_id]).project) %>
           <a href='<%= "#{kiwi_info[:jenkins_url]}#{kiwi_info[:jenkins_job_url]}" %>' 
-            onclick='alert("Koşturulacak Test Plan ID değeri <%= plan["id"] %>")'
+            onclick='alert("Koşturulacak Test Plan ID değeri <%= plan["test_plan_id"] %>")'
             target="_blank" title="Testi Koş" 
             style="float: right;">
             <i class="fa-solid fa-play"></i>
