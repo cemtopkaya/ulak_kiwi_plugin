@@ -1,52 +1,30 @@
 version: "3.1"
 
 networks:
-  test-network-redmine_plugin:
-    name: test-network-redmine_plugin
+  test-network-ulak-kiwi-plugin:
+    name: test-network-ulak-kiwi-plugin
     driver: bridge
     ipam:
       config:
-        - subnet: 20.0.5.0/24
-          gateway: 20.0.5.1
+        - subnet: 21.0.5.0/24
+          gateway: 21.0.5.1
 
 services:
   redmine:
     # command: "/docker-entrypoint.sh rails server -b 0.0.0.0"
-    container_name: test-plugin-redmine
+    container_name: test-plugin-ulak-kiwi-redmine
     build:
       dockerfile: Dockerfile
       context: ./Dockerfiles/redmine
     pull_policy: if_not_present
     image: redmine:5.0.2-custom
     restart: always
-    # entrypoint:
-    #   - sh
-    #   - -c
-    #   - |
-    #     exec tail -f /dev/null &
-    #     exec "$@"
-
-    # entrypoint: "tail -f /dev/null & exec ./docker-entrypoint.sh rails server -b 0.0.0.0"
-    # entrypoint: 
-    #   - "sh"
-    #   - "-c"
-    #   - "exec tail -f /dev/null & exec \"$@\""
-    #   - "/docker-entrypoint.sh"
-    #   - "rails"
-    #   - "server"
-    #   - "-b"
-    #   - "0.0.0.0"
-    # entrypoint: 
-    #   - "sh"
-    #   - "-c"
-    #   - "exec tail -f /dev/null & exec \"$@\""
-    #   - "-"
 
     networks:
-      test-network-redmine_plugin:
+      test-network-ulak-kiwi-plugin:
 
     ports:
-      - 3000:3000
+      - 4000:3000
 
     environment:
       REDMINE_DB_MYSQL: db
@@ -57,28 +35,28 @@ services:
     volumes:
       - ../:/workspace
       # Burada eklenti dizini oluşturulacak
-      - ../volume/redmine/plugins:/usr/src/redmine/plugins
+      - ./volume/redmine/plugins:/usr/src/redmine/plugins
       # Redmine ayarları bu dosyalarda olacak
-      - ../volume/redmine/redmine-config/secrets.yml:/usr/src/redmine/config/secrets.yml
-      - ../volume/redmine/redmine-config/configuration.yml:/usr/src/redmine/config/configuration.yml
-      - ../volume/redmine/redmine-config/database.yml:/usr/src/redmine/config/database.yml
-      - ../volume/redmine/redmine-config/additional_environment.rb:/usr/src/redmine/config/additional_environment.rb
+      - ./volume/redmine/redmine-config/secrets.yml:/usr/src/redmine/config/secrets.yml
+      - ./volume/redmine/redmine-config/configuration.yml:/usr/src/redmine/config/configuration.yml
+      - ./volume/redmine/redmine-config/database.yml:/usr/src/redmine/config/database.yml
+      - ./volume/redmine/redmine-config/additional_environment.rb:/usr/src/redmine/config/additional_environment.rb
       # - ../volume/redmine/redmine-config/application.rb:/usr/src/redmine/config/application.rb
       # Plantuml
-      - ../volume/redmine/plantuml/plantuml.sh:/usr/bin/plantuml:z
-      - ../volume/redmine/plantuml/plantuml-1.2022.7.jar:/home/redmine/plantuml.jar:z
-      - ../volume/redmine/repos/5GCN_NRF.git:/home/redmine/repos/5GCN_NRF.git
+      # - ../volume/redmine/plantuml/plantuml.sh:/usr/bin/plantuml:z
+      # - ../volume/redmine/plantuml/plantuml-1.2022.7.jar:/home/redmine/plantuml.jar:z
+      # - ../volume/redmine/repos/5GCN_NRF.git:/home/redmine/repos/5GCN_NRF.git
     
     depends_on:
       db:
         condition: service_healthy
 
   db:
-    container_name: test-plugin-redmine_mysql
+    container_name: test-plugin-ulak-kiwi-mysql
     image: mysql:5.7
     restart: always
     networks:
-      test-network-redmine_plugin:
+      test-network-ulak-kiwi-plugin:
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: redmine
@@ -88,8 +66,8 @@ services:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -padmin"]
 
     ports:
-      - 3306:3306
+      - 4306:3306
 
     volumes:
-      - ../volume/mysql/mysql-data:/var/lib/mysql
-      - ../volume/mysql/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
+      - ./volume/mysql/mysql-data:/var/lib/mysql
+      - ./volume/mysql/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf

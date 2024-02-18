@@ -10,7 +10,7 @@
   %>
       <h3>
         <div class="left">
-          <abbr title="<%= changeset.repository.url %>">
+          <abbr title="<%= changeset.repository.root_url %>">
             <%= "#{l(:label_revision)} #{changeset.format_identifier}" %>
           </abbr>
           <% if changeset.filechanges.any? && User.current.allowed_to?(:browse_repository, changeset.project) %>

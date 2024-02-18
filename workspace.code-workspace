@@ -1,0 +1,149 @@
+{
+	"folders": [
+		// Konteynerleri ayaklandırmak ve ayarları tutmak için kullanılan path.
+		// Redmine üstünde debug yaparsanız /usr/src/redmine/plugins içindeki dosyalara 
+		// hata ayıklamayı bağlayabilirsiniz. Eğer /workspace içindeki bir ruby kodunda breakpoint
+		// oluşturursanız hata ayıklama sırasında durmayacaktır.
+		{
+			"name": "workspace_dizini",
+			"path": "/workspace"
+		},
+		{
+			"name": "redmine_plugins_dizini",
+			"path": "/usr/src/redmine/plugins"
+		}
+	],
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "Kill 3001 puma",
+				"command": "kill -9 `ps aux | grep 3001 | head -n1 | awk '{print $2}'` && rm -f /usr/src/redmine/3001",
+				"type": "shell",
+				"args": [],
+				"problemMatcher": [
+					"$tsc"
+				],
+				"presentation": {
+					"reveal": "always"
+				},
+				"group": "build"
+			}
+		]
+	},
+	"launch": {
+		"configurations": [
+			{
+				"name": "Ruby Extension - Redmine rails server",
+				"type": "Ruby",
+				"request": "launch",
+				"program": "../bin/rails",
+				"cwd": "${workspaceFolder:redmine_plugins_dizini}",
+				"args": [
+					"server",
+					"-p=3000",
+					"-P=3000",
+				]
+			},
+			{
+				"type": "ruby_lsp",
+				"name": "LSP Extension - Redmine rails server",
+				"request": "launch",
+				"program": "${workspaceFolder:redmine_plugins_dizini}/../bin/rails server -p=3001 -P=3001"
+			},
+		]
+	},
+	"settings": {
+		"rubyLsp.rubyVersionManager": "auto",
+		"rubyLsp.customRubyCommand": "PATH=/usr/bin/ruby:$PATH",
+		"rubyLsp.formatter": "auto",
+		// Explorer sekmesinde görüntülenmesini istemediğimiz dizinler için "files.exclude"
+		"files.exclude": {
+			// volume dizini docker ayaklandırmak için kullanılıyor bu yüzden gizle.
+			// "**/volume": true
+		},
+		//---------- SETTINGS ---------------------------------
+		"editor.formatOnSave": true,
+		"editor.fontSize": 16,
+		"debug.console.fontSize": 18,
+		"terminal.integrated.fontSize": 16,
+		"editor.minimap.autohide": true,
+		"[json]": {
+			"editor.defaultFormatter": "esbenp.prettier-vscode"
+		},
+		"[yaml]": {
+			"editor.defaultFormatter": "esbenp.prettier-vscode"
+		},
+		"disableGlobalExtensions": true,
+		"files.autoSave": "onFocusChange",
+		"extensions.supportVirtualWorkspaces": {
+			"pub.name": true
+		},
+		"remote.downloadExtensionsLocally": true,
+		//---------- RUBY ----------------------------
+		"[ruby]": {
+			"editor.defaultFormatter": "jnbt.vscode-rufo",
+			"editor.formatOnSave": true,
+		},
+		// "ruby.format": "rubocop", // use rubocop for formatting
+		"emmet.showSuggestionsAsSnippets": true,
+		"emmet.includeLanguages": {
+			"erb": "html",
+			"ruby": "html"
+		},
+		"ruby.format": "rufo",
+		"rufo.exe": "/usr/local/bundle/bin/rufo",
+		"rufo.useBundler": false,
+		"ruby.rubocop.onSave": true,
+		"ruby.useBundler": true, //run non-lint commands with bundle exec
+		"ruby.useLanguageServer": true, // use the internal language server (see below)
+		"ruby.lint": {
+			"rubocop": {
+				"useBundler": true // enable rubocop via bundler
+			},
+			"reek": {
+				"useBundler": true // enable reek via bundler
+			},
+		},
+		"files.associations": {
+			"*.html.erb": "html",
+			"*.erb": "erb"
+		},
+		"editor.formatOnSaveTimeout": 5000,
+		//---------- DEV CONTAINER ----------------------------
+		"dev.containers.dockerComposePath": "docker compose",
+		//---------- Live Share -------------------------------
+		"liveshare.allowGuestDebugControl": true,
+		"liveshare.allowGuestTaskControl": true,
+		"liveshare.languages.allowGuestCommandControl": true,
+		"liveshare.openSharedServers": false,
+		"liveshare.publishWorkspaceInfo": true,
+		//---------- GIT --------------------------------------
+		"git.ignoreLimitWarning": true,
+		"git.autofetch": true,
+		//---------- VS Code Renkelndirme ---------------------
+		"workbench.colorCustomizations": {
+			"tab.unfocusedActiveBorder": "#000000",
+			"activityBar.activeBackground": "#ff3333",
+			"activityBar.background": "#ff3333",
+			"activityBar.foreground": "#e7e7e7",
+			"activityBar.inactiveForeground": "#e7e7e799",
+			"activityBarBadge.background": "#00df00",
+			"activityBarBadge.foreground": "#15202b",
+			"commandCenter.border": "#e7e7e799",
+			"sash.hoverBorder": "#ff3333",
+			"statusBar.background": "#ff0000",
+			"statusBar.foreground": "#e7e7e7",
+			"statusBarItem.hoverBackground": "#ff3333",
+			"statusBarItem.remoteBackground": "#ff0000",
+			"statusBarItem.remoteForeground": "#e7e7e7",
+			"titleBar.activeBackground": "#ff0000",
+			"titleBar.activeForeground": "#e7e7e7",
+			"titleBar.inactiveBackground": "#ff000099",
+			"titleBar.inactiveForeground": "#e7e7e799"
+		},
+		//------ VS Code Çerçevesini Renkelndirme ------------
+		"peacock.remoteColor": "#118877",
+		//-----------------------------------------------------
+	}
+}

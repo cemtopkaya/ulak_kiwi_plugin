@@ -1,8 +1,11 @@
 #!/bin/bash
 
+REDMINE_HOST_PORT=$1
+MYSQL_HOST_PORT=$2
+
 # MySQL sunucusunun IP adresi ve portu
 MYSQL_HOST=db
-MYSQL_PORT=3306
+MYSQL_PORT=$MYSQL_HOST_PORT
 
 # MySQL kullanıcı adı ve şifresi
 MYSQL_USER=root
@@ -39,14 +42,14 @@ check_redmine_isup(){
     # ! işareti, curl komutunun çıktısının başarısız olduğunu (yani, HTTP durum kodunun başarısız olduğunu) kontrol eder.
     # Bu döngü, HTTP isteğinin başarılı olana kadar bekler ve bir saniye aralıklarla tekrarlar (sleep 1).
 
-    while ! curl -s -o /dev/null -w '%{http_code}' http://localhost:3000; do 
+    while ! curl -s -o /dev/null -w '%{http_code}' http://localhost:$1; do 
         echo "Redmine için PUMA sunucusuna bağlanılamadı, 4sn bekleyip tekrar denenecek..."
         sleep 4; 
     done;
 }
 
 echo -e "\n\n----------------------------- CHECK IF REDMINE SERVER IS UP -------------------------------------------"
-check_redmine_isup;
+check_redmine_isup $REDMINE_HOST_PORT;
 
 # ------------------------------------------------------------------------------------------------------------
 
@@ -113,11 +116,11 @@ createNewProject() {
         --user "${REDMINE_ADMIN_USERNAME}:${REDMINE_ADMIN_PASSWORD}" \
         -X POST \
         -d '{"project":{"name":"YENI_PROJE_ISMI","identifier":"yeni_proje","description":"Proje açıklaması"}}' \
-        http://localhost:3000/projects.json
+        http://localhost:$1/projects.json
 }
 
 echo -e "\n\n----------------------------- CREATE NEW PROJECT USING BY API -----------------------------------------"
-createNewProject;
+createNewProject $REDMINE_HOST_PORT;
 
 # ------------------------------------------------------------------------------------------------------------
 

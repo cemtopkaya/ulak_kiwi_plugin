@@ -1,0 +1,11 @@
+production:
+  email_delivery:
+    delivery_method: :smtp
+    smtp_settings:
+      enable_starttls_auto: true
+      address: "smtp.office365.com"
+      port: 587
+      domain: "domain.com.tr"
+      authentication: :login
+      user_name: "kullanici@domain.com.tr"
+      password: "sifreN'oldu"

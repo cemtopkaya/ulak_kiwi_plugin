@@ -11,7 +11,7 @@ changeset = @issue.changesets.find_by_id(@changeset_id)
     <option value=""><%= l(:option_issue_code_artifacts_choose) %></option>
     <% 
     begin
-      tag_info = UlakTest::Git.commit_tags(changeset.repository.url, changeset.identifier) 
+      tag_info = UlakTest::Git.commit_tags(changeset.repository.root_url, changeset.identifier) 
     rescue StandartError => e 
       javascript_tag do 
     %>
