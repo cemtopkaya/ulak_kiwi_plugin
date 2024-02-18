@@ -1,11 +1,11 @@
 #!/bin/bash
 
-REDMINE_HOST_PORT=$1
-MYSQL_HOST_PORT=$2
+REDMINE_HOST_PORT=${1:-"3000"}
+MYSQL_HOST_PORT=${2:-"3306"}
 
 # MySQL sunucusunun IP adresi ve portu
 MYSQL_HOST=db
-MYSQL_PORT=$MYSQL_HOST_PORT
+MYSQL_PORT=3306
 
 # MySQL kullanıcı adı ve şifresi
 MYSQL_USER=root
@@ -32,8 +32,33 @@ check_mysql_connection() {
     fi
 }
 
-echo -e "\n\n----------------------------- CHECK IF MySQL SERVER IS UP ---------------------------------------------"
+echo -e "\n\n----------------------------- CHECK IF MySQL SERVER IS UP ----------------------------------------------"
 check_mysql_connection;
+
+# -------------------------------------------------------------------------------------------------------------------
+
+install_dev_debug_packages() {
+    # Redmine docker içinde aşağıdaki compose.yml ile çalışıyor ve içine VS Code ile debug için eklenti kuruyoruz.
+    gem install ruby-debug-ide --conservative
+
+    # Kod içinde gezinme, intellisense, yardım pencereleri sağlayacak alt yapı
+    gem install solargraph --conservative
+
+    # RUFO : RUby FOrmatter
+    gem install rufo --conservative  
+
+    # Ruby Formatter olarak rubocop da kullanılabilir
+    # gem install rubocop --conservative
+
+    # Aşağıdaki hata için çalıştırılacak:
+    # Missing `secret_key_base` for 'production' environment, set this string with `bin/rails credentials
+    # EDITOR="nano --wait" /usr/src/redmine/bin/rails credentials:edit
+}
+
+echo -e "\n\n----------------------------- INSTALL RUBY DEBUG & IDE PACKAGES ----------------------------------------"
+install_dev_debug_packages;
+
+# -------------------------------------------------------------------------------------------------------------------
 
 check_redmine_isup(){
     # -s parametresi, curl komutunun sessiz modda çalışmasını sağlar, yani çıktıya hiçbir şey yazdırmaz.
@@ -48,10 +73,12 @@ check_redmine_isup(){
     done;
 }
 
-echo -e "\n\n----------------------------- CHECK IF REDMINE SERVER IS UP -------------------------------------------"
+# -------------------------------------------------------------------------------------------------------------------
+
+echo -e "\n\n----------------------------- CHECK IF REDMINE SERVER IS UP --------------------------------------------"
 check_redmine_isup $REDMINE_HOST_PORT;
 
-# ------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------------
 
 # REST Web servisini etkinleştirmek için veritabanında aşağıdaki komutla 
 # settings tablosunda name alanı rest_api_enabled olan kaydın value alanı true olarak güncellenir
@@ -84,11 +111,11 @@ aktivateRestAPI() {
         mysql -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -e "${sql}"
     fi
 
-    mysql -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -e "UPDATE settings SET value='${REST_API_VALUE}', updated_on='${CURRENT_TIME}' WHERE name='${REST_API_NAME}';"
-    mysql -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -e "UPDATE settings SET value='${JSONP_VALUE}', updated_on='${CURRENT_TIME}' WHERE name='${JSONP_NAME}';"
+    mysql -v -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -e "UPDATE settings SET value='${REST_API_VALUE}', updated_on='${CURRENT_TIME}' WHERE name='${REST_API_NAME}';"
+    mysql -v -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -e "UPDATE settings SET value='${JSONP_VALUE}', updated_on='${CURRENT_TIME}' WHERE name='${JSONP_NAME}';"
 }
 
-echo -e "\n\n----------------------------- ACTIVATE REST API WITH JSONP --------------------------------------------"
+echo -e "\n\n----------------------------- ACTIVATE REST API WITH JSONP ---------------------------------------------"
 aktivateRestAPI;
 
 # admin Kullanıcısının şifresini (admin) değiştirmek zorunda kalmayalım 
@@ -99,10 +126,10 @@ keepAdminPasswordAdmin() {
     mysql -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -v -e "${sql}"
 }
 
-echo -e "\n\n----------------------------- ADMIN PASSWORD WILL BE KEPT AS IT IS ------------------------------------"
+echo -e "\n\n----------------------------- ADMIN PASSWORD WILL BE KEPT AS IT IS -------------------------------------"
 keepAdminPasswordAdmin;
 
-# ------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------------
 
 createNewProject() {
     # Başlangıç projesini oluşturuyorum
@@ -115,50 +142,27 @@ createNewProject() {
         -H "Content-Type: application/json" \
         --user "${REDMINE_ADMIN_USERNAME}:${REDMINE_ADMIN_PASSWORD}" \
         -X POST \
-        -d '{"project":{"name":"YENI_PROJE_ISMI","identifier":"yeni_proje","description":"Proje açıklaması"}}' \
+        -d '{"project":{"name":"YENI_PROJE_ISMI","identifier":"yeni_proje","description":"Proje aciklamasi"}}' \
         http://localhost:$1/projects.json
 }
 
-echo -e "\n\n----------------------------- CREATE NEW PROJECT USING BY API -----------------------------------------"
+echo -e "\n\n----------------------------- CREATE NEW PROJECT USING BY API ------------------------------------------"
 createNewProject $REDMINE_HOST_PORT;
 
-# ------------------------------------------------------------------------------------------------------------
-
-install_dev_debug_packages(){
-    # Redmine docker içinde aşağıdaki compose.yml ile çalışıyor ve içine VS Code ile debug için eklenti kuruyoruz.
-    gem install ruby-debug-ide --conservative
-
-    # Kod içinde gezinme, intellisense, yardım pencereleri sağlayacak alt yapı
-    gem install solargraph --conservative
-
-    # RUFO : RUby FOrmatter
-    gem install rufo --conservative  
-
-    # Ruby Formatter olarak rubocop da kullanılabilir
-    # gem install rubocop --conservative
-
-    # Aşağıdaki hata için çalıştırılacak:
-    # Missing `secret_key_base` for 'production' environment, set this string with `bin/rails credentials
-    # EDITOR="nano --wait" /usr/src/redmine/bin/rails credentials:edit
-}
-
-echo -e "\n\n----------------------------- INSTALL RUBY DEBUG & IDE PACKAGES ---------------------------------------"
-install_dev_debug_packages;
-
-# ------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------------
 
 create_symlink_of_plugin(){
     # Kodu geliştireceğimiz dizin konteynere "/workspace" ismiyle bağlanacak.
     # "/workspace" dizini içinde "./ornek_eklenti" ismindeki klasörü "/usr/src/redmine/plugins" dizininin altına soft link ile bağlıyoruz
     # launch.json içinde `"program": "/usr/src/redmine/bin/rails",` ile kodumuzu başlatabiliyoruz.
     # Farklı isimlerde eklentiler için docker-compose.yml içinde mount edilmi "/workspace/volume/redmine/redmine-plugins" dizini içinde yaratarak kodlayabilirsiniz
-    ln -s -v /workspace/ornek_markdown_makro /usr/src/redmine/plugins/ornek_markdown_makro  && echo "link created" || echo "link creation failed"
+    ln -sf -v /workspace /workspace/.devcontainer/volume/redmine/plugins/ulak_kiwi_plugin && echo "link created" || echo "link creation failed"
 }
 
-echo -e "\n\n----------------------------- CREATE SYMBOLIC LINK FOR REDMINE PLUGIN ---------------------------------"
+echo -e "\n\n----------------------------- CREATE SYMBOLIC LINK FOR REDMINE PLUGIN ----------------------------------"
 create_symlink_of_plugin;
 
-# ------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------------
 
 enable_visual_editor_tab_for_switch(){
     sql="UPDATE settings
@@ -171,10 +175,10 @@ WHERE
     mysql -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -v -e "${sql};"
 }
 
-echo -e "\n\n----------------------------- ENABLE VISUAL EDITOR AS TAB ---------------------------------"
+echo -e "\n\n----------------------------- ENABLE VISUAL EDITOR AS TAB ----------------------------------------------"
 enable_visual_editor_tab_for_switch;
 
-# ------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------
 
 enable_visual_editor_module_for_new_project(){
     sql="INSERT INTO enabled_modules (project_id, name)
@@ -192,7 +196,17 @@ LIMIT 1;"
     mysql -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -v -e "${sql};"
 }
 
-echo -e "\n\n----------------------------- ENABLE Visual Editor MODULE FOR NEW PROJECT ---------------------------------"
+echo -e "\n\n----------------------------- ENABLE Visual Editor MODULE FOR NEW PROJECT ------------------------------"
 enable_visual_editor_module_for_new_project;
 
-# ------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------------------
+
+kill_puma_server() {
+    echo "Sending SIGKILL to Redmine puma processes"
+    pkill -9 -f "puma.*\[redmine\]"
+    # uzun yolu
+    # kill -9 `ps aux | grep -E "puma.*\[redmine\]" | awk '{print $2}'`
+}
+
+echo -e "\n\n----------------------------- KILL DEFAULT RUNNING REDMINE PUMA SERVER ---------------------------------"
+kill_puma_server;

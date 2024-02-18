@@ -34,7 +34,7 @@
 	},
 	"workspaceFolder": "/workspace",
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "/workspace/.devcontainer/setup_ruby_env.sh & ln -s /workspace /workspace/volume/redmine/plugins/ulak_kiwi_plugin",
+	"postCreateCommand": "/workspace/.devcontainer/setup_ruby_env.sh",
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	"remoteUser": "root"
 }

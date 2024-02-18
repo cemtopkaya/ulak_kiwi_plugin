@@ -1,0 +1,2 @@
+.devcontainer/volume/mysql/**/*
+.devcontainer/volume/redmine/plugins/**/*
