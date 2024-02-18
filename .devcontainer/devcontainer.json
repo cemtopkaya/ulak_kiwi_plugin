@@ -1,0 +1,40 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/alpine
+{
+	"name": "Redmine Eklenti Gelistirme",
+	"privileged": true,
+	"dockerComposeFile": [
+		"docker-compose.yml"
+	],
+	"service": "redmine",
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			// Uzantılar otomatik olarak konteyner ayaklandığında VS Code tarafında kurulacak
+			"extensions": [
+				"ms-vscode-remote.vscode-remote-extensionpack",
+				"MS-vsliveshare.vsliveshare",
+				// Ruby uzantıları
+				"rebornix.Ruby", // Deprecate oldu yerini Shopify.ruby-lsp alacak
+				"Shopify.ruby-lsp", // Yeni uzantı bu olacak
+				"castwide.solargraph", // intellisense, biçimlendirme ve diğer kolaylıklar için
+				"jnbt.vscode-rufo", // ruby formatter (rufo)
+				// YAML uzantıları
+				"esbenp.prettier-vscode", // formatlayıcı
+				// VS Code yardımcı
+				"mhutchie.git-graph", // Git dallarını görselleştirir
+				"Gruntfuggly.todo-tree", // Yapılacak diye işaretlenen girdileri görüntüler
+				"johnpapa.vscode-peacock" // VS Code pencerelerinin renklerle ayrıştırır
+			]
+		}
+	},
+	"workspaceFolder": "/workspace",
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "/workspace/.devcontainer/setup_ruby_env.sh",
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	"remoteUser": "root"
+}
