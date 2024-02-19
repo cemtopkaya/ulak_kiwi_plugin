@@ -142,12 +142,40 @@ createNewProject() {
         -H "Content-Type: application/json" \
         --user "${REDMINE_ADMIN_USERNAME}:${REDMINE_ADMIN_PASSWORD}" \
         -X POST \
-        -d '{"project":{"name":"YENI_PROJE_ISMI","identifier":"yeni_proje","description":"Proje aciklamasi"}}' \
+        -d '{"project":{"name":"YENI_PROJE_ISMI","identifier":"yeni_proje","description":"Proje açıklaması"}}' \
         http://localhost:$1/projects.json
 }
 
 echo -e "\n\n----------------------------- CREATE NEW PROJECT USING BY API ------------------------------------------"
 createNewProject $REDMINE_HOST_PORT;
+
+# -------------------------------------------------------------------------------------------------------------------
+
+create_new_tracker() {
+    # Bir tracker eklemezsek NEW ISSUE yapamayacağımız için
+    # trackers Tablosuna bir 'Open' isminde bir kayıt gireceğiz (GUI'den http://localhost:3000/trackers/new)
+    # 'Open' İsimli tracker aynı zamanda YENI_PROJE_ISMI adıyla ta
+
+    sql="
+    SET @max_position := (SELECT MAX(position) FROM trackers);
+
+    INSERT INTO trackers (name, description, position, fields_bits, default_status_id)
+    SELECT * FROM (SELECT 'Open', '', COALESCE(@max_position, 0) + 1, 64, 1) AS new_tracker
+    WHERE NOT EXISTS (
+        SELECT * FROM trackers WHERE name = 'Open'
+    ) LIMIT 1;
+
+    INSERT INTO projects_trackers (project_id, tracker_id)
+    SELECT p.id, t.id AS tracker_id 
+    FROM projects p
+    JOIN trackers t ON t.name = 'Open'
+    WHERE p.name = 'YENI_PROJE_ISMI';"
+
+    mysql -v -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -v -e "${sql};"
+}
+
+echo -e "\n\n----------------------------- CREATE NEW TRACKER ----------------------------------"
+create_new_tracker;
 
 # -------------------------------------------------------------------------------------------------------------------
 

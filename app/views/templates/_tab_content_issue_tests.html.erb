@@ -265,7 +265,7 @@
       $spanTestCase = $li.find('span.test-case').eq(0)
       caseId = $li.data('case-id')
       // caseId = 6 için gruplanmış test sonuçları {"idle":1,"running":0,"paused":0,"passed":1,"failed":0,"blocked":0,"error":0,"waived":1}
-      caseStatuses = groupedData[planId][caseId]
+      caseStatuses = groupedData[planId] ? groupedData[planId][caseId] : []
       /*
         koşularda bu test senaryosu: 
         - varsa son koşudaki test sonucuna göre stil verilecek
@@ -274,7 +274,7 @@
         - yoksa "c-pill--nostatus" ile beyaz arka planda 
         ve içinde <span class="test-case-result ..."> elemanları olmayacak.
       */
-      liCaseLastStatus = plan_case_results[planId].find(a=>a.case == caseId)
+      liCaseLastStatus = plan_case_results[planId] ? plan_case_results[planId].find(a=>a.case == caseId) : null
 
       if ( !liCaseLastStatus ) {
         return true; // continue yerine true kullanılır
