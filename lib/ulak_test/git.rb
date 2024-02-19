@@ -24,17 +24,17 @@ module UlakTest
       tag_info
     end
 
-    def self.tag_description(repository_url, tag)
-      git_cat_command = "git -C #{repository_url} cat-file -p #{tag}"
+    def self.tag_description(git_dir, tag)
+      git_cat_command = "git -C #{git_dir} cat-file -p #{tag}"
       puts ">>>> git_cat_command: #{git_cat_command}"
       git_cat_output = `#{git_cat_command}`
       git_cat_output
     end
 
-    def self.tag_artifacts_metadata(repository_url, tag_name)
+    def self.tag_artifacts_metadata(repository_root_url, tag_name)
       result = nil
       
-      git_cat_output = tag_description(repository_url, tag_name)
+      git_cat_output = tag_description(repository_root_url, tag_name)
 
       if git_cat_output.empty?
         return nil
@@ -60,8 +60,8 @@ module UlakTest
       result
     end
 
-    def self.tag_artifacts(repository_url, tag_name)
-      artifacts_metadata = tag_artifacts_metadata(repository_url, tag_name)
+    def self.tag_artifacts(repository_root_url, tag_name)
+      artifacts_metadata = tag_artifacts_metadata(repository_root_url, tag_name)
       artifacts = artifacts_metadata&.dig("distros")&.map { |cs| cs["artifacts"] }&.compact&.flatten || []
       artifacts
     end
@@ -89,7 +89,7 @@ module UlakTest
         # git_tag_command = "git -C #{Repository.find_by_id(cs.repository_id).url} tag --contains #{cs.revision}"
         isMergeTags = false
         merge_tags = isMergeTags ? "--merged" : ""
-        git_tag_command = "git -C #{cs.repository.url} tag #{merge_tags} --contains #{cs.revision} "
+        git_tag_command = "git -C #{cs.repository.root_url} tag #{merge_tags} --contains #{cs.revision} "
         puts ">>>> git_tag_command: #{git_tag_command}"
 
         # Komutu çalıştırın ve çıktıyı yakalayın
@@ -102,8 +102,8 @@ module UlakTest
         tags.each do |tag|
           # Etiket açıklamasını almak için `git show` komutunu kullanın
           # git_show_command = "git -C #{Repository.find_by_id(cs.repository_id).url} show #{tag}"
-          # git_show_command = "git -C #{cs.repository.url} show #{tag}"
-          git_cat_command = "git -C #{cs.repository.url} cat-file -p #{tag}"
+          # git_show_command = "git -C #{cs.repository.root_url} show #{tag}"
+          git_cat_command = "git -C #{cs.repository.root_url} cat-file -p #{tag}"
           puts ">>>> git_cat_command: #{git_cat_command}"
           git_cat_output = `#{git_cat_command}`
 

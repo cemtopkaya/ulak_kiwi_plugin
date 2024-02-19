@@ -156,7 +156,7 @@ create_symlink_of_plugin(){
     # "/workspace" dizini içinde "./ornek_eklenti" ismindeki klasörü "/usr/src/redmine/plugins" dizininin altına soft link ile bağlıyoruz
     # launch.json içinde `"program": "/usr/src/redmine/bin/rails",` ile kodumuzu başlatabiliyoruz.
     # Farklı isimlerde eklentiler için docker-compose.yml içinde mount edilmi "/workspace/volume/redmine/redmine-plugins" dizini içinde yaratarak kodlayabilirsiniz
-    ln -sf -v /workspace /workspace/.devcontainer/volume/redmine/plugins/ulak_kiwi_plugin && echo "link created" || echo "link creation failed"
+    ln -sf -v /workspace /usr/src/redmine/plugins/ulak_kiwi_plugin && echo "link created" || echo "link creation failed"
 }
 
 echo -e "\n\n----------------------------- CREATE SYMBOLIC LINK FOR REDMINE PLUGIN ----------------------------------"
@@ -165,12 +165,12 @@ create_symlink_of_plugin;
 # -------------------------------------------------------------------------------------------------------------------
 
 enable_visual_editor_tab_for_switch(){
-    sql="UPDATE settings
-SET 
-    value='--- !ruby/hash:ActiveSupport::HashWithIndifferentAccess\nvisual_editor_mode_switch_tab: \'1\'\n',
-    updated_on = '${CURRENT_TIME}'
-WHERE 
-    name='plugin_redmine_wysiwyg_editor'"
+    sql="UPDATE settings 
+    SET 
+      value='--- !ruby/hash:ActiveSupport::HashWithIndifferentAccess\nvisual_editor_mode_switch_tab: \'1\'\n',
+      updated_on = '${CURRENT_TIME}'
+    WHERE 
+      name='plugin_redmine_wysiwyg_editor'"
 
     mysql -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -v -e "${sql};"
 }
@@ -182,16 +182,16 @@ enable_visual_editor_tab_for_switch;
 
 enable_visual_editor_module_for_new_project(){
     sql="INSERT INTO enabled_modules (project_id, name)
-SELECT id, 'visual_editor'
-FROM projects
-WHERE identifier='yeni_proje'
-AND NOT EXISTS (
-    SELECT 1
-    FROM enabled_modules
-    WHERE project_id = (SELECT id FROM projects WHERE identifier='yeni_proje' LIMIT 1)
-    AND name='visual_editor'
-)
-LIMIT 1;"
+    SELECT id, 'visual_editor'
+    FROM projects
+    WHERE identifier='yeni_proje'
+    AND NOT EXISTS (
+        SELECT 1
+        FROM enabled_modules
+        WHERE project_id = (SELECT id FROM projects WHERE identifier='yeni_proje' LIMIT 1)
+        AND name='visual_editor'
+    )
+    LIMIT 1;"
 
     mysql -h $MYSQL_HOST -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${DATABASE}" -v -e "${sql};"
 }
@@ -202,9 +202,8 @@ enable_visual_editor_module_for_new_project;
 # ---------------------------------------------------------------------------------------------------------------------
 
 kill_puma_server() {
-    echo "Sending SIGKILL to Redmine puma processes"
-    pkill -9 -f "puma.*\[redmine\]"
-    # uzun yolu
+    pkill -9 -f "puma.*\[redmine\]"  && echo "Redmine puma processes was killed" || echo "Killing Redmine puma processes failed"
+    # pkill yerine daha uzun yolu
     # kill -9 `ps aux | grep -E "puma.*\[redmine\]" | awk '{print $2}'`
 }
 

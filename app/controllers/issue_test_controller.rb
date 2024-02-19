@@ -69,9 +69,9 @@ class IssueTestController < ApplicationController
   end
 
   def fetch_artifact_run_tags(cs, tag_name)
-    artifacts = UlakTest::Git.tag_artifacts(cs.repository.url, tag_name)
+    artifacts = UlakTest::Git.tag_artifacts(cs.repository.root_url, tag_name)
     if artifacts.empty?
-      tag_description = UlakTest::Git.tag_description(cs.repository.url, tag_name)
+      tag_description = UlakTest::Git.tag_description(cs.repository.root_url, tag_name)
     end
     artifact_kiwi_tags = artifacts.map { |a| a.end_with?(".deb") ? "#{a.split("_")[0]}=#{a.split("_")[1]}" : a }
 
