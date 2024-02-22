@@ -35,7 +35,8 @@ class KiwiApiController < ApplicationController
     all_tests_before = Test.all
     plans = UlakTest::Kiwi.fetch_test_plans()
     Rails.logger.info(">>> plans: #{plans}")
+    result = plans.select { |veri| veri["name"].downcase.include?(params[:q]) }
 
-    render json: plans, status: :ok
+    render json: result, status: :ok
   end
 end
