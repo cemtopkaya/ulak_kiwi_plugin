@@ -1,4 +1,4 @@
-jenkins_url: "https://jenkins-testmudurlugu.ulakhaberlesme.com.tr/"
+jenkins_url: "https://jenkins-sebeketestekibi.ulakhaberlesme.com.tr/"
 jenkins_job_url: "job/ROBOT/"
 jenkins_job_auth_token: "robot"
 kiwi_url: "https://kiwi.ulakhaberlesme.com.tr/"
