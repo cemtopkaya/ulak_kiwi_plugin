@@ -105,12 +105,12 @@ module UlakTest
         response = http.post(url, body.to_json, @headers)
         # Yanıtı alıp işleme
         if response.is_a?(Net::HTTPSuccess)
-          puts "İstek başarılı. Yanıt: #{response.body}"
+          Rails.logger.debug("İstek başarılı. Yanıt: #{response.body}")
         else
-          puts "İstek başarısız. Hata kodu: #{response.code}, Hata mesajı: #{response.message}"
+          Rails.logger.warn("İstek başarısız. Hata kodu: #{response.code}, Hata mesajı: #{response.message}")
         end
       rescue StandardError => e
-        puts "----- Error occurred: #{e.message}"
+        Rails.logger.error("----- Error occurred: #{e.message}")
         raise e
       end
       @headers[:Cookie] = "sessionid=#{JSON.parse(response.body)["result"]}"
@@ -128,9 +128,9 @@ module UlakTest
 
         # POST isteği yapma
         response = http.post(url, body.to_json, @headers)
-        puts ">>>> Cevap istisnasız geldi: #{response}"
+        Rails.logger.info(">>>> Cevap istisnasız geldi: #{response}")
       rescue StandardError => e
-        puts "----- Error occurred: #{e.message}"
+        Rails.logger.error("----- Error occurred: #{e.message}")
       end
     end
 

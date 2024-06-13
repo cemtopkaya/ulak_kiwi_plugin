@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 module UlakTest
   module Git
 
@@ -5,8 +7,8 @@ module UlakTest
     def self.commit_tags(git_dir, revision)
       # parametreler geçerli mi kontrol et
 
-      git_tag_command = "git -C #{git_dir} tag --contains #{revision}"
-      puts ">>>> git_tag_command: #{git_tag_command}"
+      git_tag_command = "git -C #{git_dir} tag --contains '#{revision}'"
+      Rails.logger.debug(">>>> git_tag_command: #{git_tag_command}")
 
       # Komutu çalıştırın ve çıktıyı yakalayın
       git_tags_output = `#{git_tag_command}`
@@ -17,23 +19,27 @@ module UlakTest
       tag_info = []
 
       tags.each do |tag_name|
-        tag_date = `git -C #{git_dir} show --format=%ai --no-patch "#{tag_name}" | grep -oP '\\d{4}-\\d{2}-\\d{2} \\d{2}\:\\d{2}\:\\d{2}'`.chomp
+        Rails.logger.debug(">>>> tags.each: tag_name: #{tag_name}")
+        tag_date_command = "git -C #{git_dir} show --format=%ai --no-patch '#{tag_name}' | grep -oP '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}'"
+        Rails.logger.debug(">>>> tag_date_command: #{tag_date_command}")
+        tag_date = `#{tag_date_command}`.chomp
+        Rails.logger.debug(">>>> tag_date: #{tag_date} >> tag_name: #{tag_name}")
         tag_info << { tag: tag_name, date: tag_date }
       end
-      
+
       tag_info
     end
 
     def self.tag_description(git_dir, tag)
-      git_cat_command = `git -C #{git_dir} cat-file -p "#{tag}"`
-      puts ">>>> git_cat_command: #{git_cat_command}"
+      git_cat_command = "git -C #{git_dir} cat-file -p '#{tag}'"
+      Rails.logger.debug(">>>> git_cat_command: #{git_cat_command}")
       git_cat_output = `#{git_cat_command}`
       git_cat_output
     end
 
     def self.tag_artifacts_metadata(repository_root_url, tag_name)
       result = nil
-      
+
       git_cat_output = tag_description(repository_root_url, tag_name)
 
       if git_cat_output.empty?
@@ -54,7 +60,7 @@ module UlakTest
         end
       rescue Psych::SyntaxError => e
         # Eğer YAML formatında bir hata varsa burada işleyebiliriz
-        puts "<<<<<< YAML formatında hata: #{e.message}"
+        Rails.logger.debug("<<<<<< YAML formatında hata: #{e.message}")
       end
 
       result
@@ -65,7 +71,7 @@ module UlakTest
       artifacts = artifacts_metadata&.dig("distros")&.map { |cs| cs["artifacts"] }&.compact&.flatten || []
       artifacts
     end
-    
+
     # Bir issue'nun changesets özelliği parametre olarak verilir ve her revizyon için artifacts döner
 
     # @param [Array<Changeset>] Changeset dizisi
@@ -75,7 +81,6 @@ module UlakTest
       changesets&.each do |cs|
         get_commit_artifacs(cs)
       end
-
     end
 
     # issue İle ilişkili commitlerin varsa git etiketlerini ruby nesnesi olarak döner
@@ -89,8 +94,8 @@ module UlakTest
         # git_tag_command = "git -C #{Repository.find_by_id(cs.repository_id).url} tag --contains #{cs.revision}"
         isMergeTags = false
         merge_tags = isMergeTags ? "--merged" : ""
-        git_tag_command = `git -C #{cs.repository.root_url} tag "#{merge_tags}" --contains "#{cs.revision}"`
-        puts ">>>> git_tag_command: #{git_tag_command}"
+        git_tag_command = "git -C #{cs.repository.root_url} tag '#{merge_tags}' --contains '#{cs.revision}'"
+        Rails.logger.debug(">>>> git_tag_command: #{git_tag_command}")
 
         # Komutu çalıştırın ve çıktıyı yakalayın
         git_tags_output = `#{git_tag_command}`
@@ -103,8 +108,8 @@ module UlakTest
           # Etiket açıklamasını almak için `git show` komutunu kullanın
           # git_show_command = "git -C #{Repository.find_by_id(cs.repository_id).url} show #{tag}"
           # git_show_command = "git -C #{cs.repository.root_url} show #{tag}"
-          git_cat_command = "git -C #{cs.repository.root_url} cat-file -p #{tag}"
-          puts ">>>> git_cat_command: #{git_cat_command}"
+          git_cat_command = "git -C #{cs.repository.root_url} cat-file -p '#{tag}'"
+          Rails.logger.debug(">>>> git_cat_command: #{git_cat_command}")
           git_cat_output = `#{git_cat_command}`
 
           # Eğer etiket varsa açıklamayı alın, yoksa "No description" yazın
@@ -128,13 +133,11 @@ module UlakTest
             end
           rescue Psych::SyntaxError => e
             # Eğer YAML formatında bir hata varsa burada işleyebiliriz
-            puts "<<<<<< YAML formatında hata: #{e.message}"
+            Rails.logger.debug("<<<<<< YAML formatında hata: #{e.message}")
           end
         end # < tags.each
       end # < issue.changesets&.each
       result
     end
-
-    
   end
 end

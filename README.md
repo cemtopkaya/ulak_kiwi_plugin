@@ -42,3 +42,69 @@ distros:
 ![image](https://github.com/cemtopkaya/ulak_test/assets/261946/c69b5381-2bbe-4849-bf79-6167022db950)
 
 ![image](https://github.com/cemtopkaya/ulak_test/assets/261946/7addb947-4824-4559-be48-b009902303ca)
+
+## Rails Günlükleri
+```ruby
+Rails.logger.debug "Debug level message"
+Rails.logger.info "Info level message"
+Rails.logger.warn "Warning level message"
+Rails.logger.error "Error level message"
+Rails.logger.fatal "Fatal level message"
+```
+
+### INFO
+```ruby
+def send_confirmation_email(user)
+  # Send confirmation email code
+  Rails.logger.info "Confirmation email sent to #{user.email}"
+end
+```
+
+### WARN
+```ruby
+def process_order(order)
+  if order.items.empty?
+    Rails.logger.warn "Order #{order.id} has no items"
+  end
+  # Process order code
+end
+```
+
+### ERROR
+```ruby
+def divide(a, b)
+  begin
+    result = a / b
+  rescue ZeroDivisionError => e
+    Rails.logger.error "Error dividing #{a} by #{b}: #{e.message}"
+    result = nil
+  end
+  return result
+end
+```
+
+### FATAL
+```ruby
+def destroy_user(user)
+  if user.admin?
+    Rails.logger.fatal "Attempted to destroy admin user #{user.id}"
+    raise "Cannot destroy admin user"
+  else
+    # Destroy user code
+  end
+end
+```
+
+### UNKNOWN
+```ruby
+def some_method(param)
+  if param.nil?
+    Rails.logger.unknown "Param is nil, using default value"
+    param = "default"
+  end
+  # Method code
+end
+```
+
+Kaynaklar:
+- https://www.mintbit.com/blog/ruby-on-rails-log-levels-examples-and-best-practices

@@ -161,7 +161,8 @@
   }
 
   tabTestResults.prototype.fetchTestRuns = function(select_id, changeset_id, selected_tag){
-    const url = `/<%= $NAME_KIWI_TESTS %>/issues/<%=@issue_id%>/tab/test_results/changesets/${changeset_id}/tags/runs?tag=${selected_tag}`
+    const encodedTag = encodeURIComponent(selected_tag);
+    const url = `/<%= $NAME_KIWI_TESTS %>/issues/<%=@issue_id%>/tab/test_results/changesets/${changeset_id}/tags/runs?tag=${encodedTag}`
     $.get( url, function( data ) {
         console.log(">>> TAG seçildi .... ");
         $('div.test_run_list').each(function(idx, div){

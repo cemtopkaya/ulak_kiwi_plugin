@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 class KiwiApiController < ApplicationController
   def check_connection
     begin
@@ -32,10 +34,16 @@ class KiwiApiController < ApplicationController
   end
 
   def fetch_test_plans
+    query = params[:q].downcase
+    Rails.logger.info(">>> Aranan test planı: #{query}")
+
     all_tests_before = Test.all
     plans = UlakTest::Kiwi.fetch_test_plans()
-    Rails.logger.info(">>> plans: #{plans}")
-    result = plans.select { |veri| veri["name"].downcase.include?(params[:q]) }
+    Rails.logger.debug(">>> plans: #{plans}")
+
+    result = plans.select do |plan|
+      plan["name"].downcase.include?(query) || plan["id"].to_s.include?(query)
+    end
 
     render json: result, status: :ok
   end

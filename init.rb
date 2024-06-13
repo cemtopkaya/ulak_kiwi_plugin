@@ -27,7 +27,11 @@ else
   end
 end
 
-$NAME_KIWI_TESTS = :ulak_kiwi_plugin
+# Günlük seviyesini DEBUG olarak ayarlayın
+# https://www.mintbit.com/blog/ruby-on-rails-log-levels-examples-and-best-practices
+Rails.logger.level = Logger::DEBUG
+
+$NAME_KIWI_TESTS = :kiwi_plugin
 $PLUGIN_NAME_KIWI_TESTS = "plugin_#{$NAME_KIWI_TESTS}".to_sym
 
 Redmine::Plugin.register $NAME_KIWI_TESTS do
