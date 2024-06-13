@@ -17,7 +17,7 @@ module UlakTest
       tag_info = []
 
       tags.each do |tag_name|
-        tag_date = `git -C #{git_dir} show --format=%ai --no-patch #{tag_name} | grep -oP '\\d{4}-\\d{2}-\\d{2} \\d{2}\:\\d{2}\:\\d{2}'`.chomp
+        tag_date = `git -C #{git_dir} show --format=%ai --no-patch "#{tag_name}" | grep -oP '\\d{4}-\\d{2}-\\d{2} \\d{2}\:\\d{2}\:\\d{2}'`.chomp
         tag_info << { tag: tag_name, date: tag_date }
       end
       
@@ -25,7 +25,7 @@ module UlakTest
     end
 
     def self.tag_description(git_dir, tag)
-      git_cat_command = "git -C #{git_dir} cat-file -p #{tag}"
+      git_cat_command = `git -C #{git_dir} cat-file -p "#{tag}"`
       puts ">>>> git_cat_command: #{git_cat_command}"
       git_cat_output = `#{git_cat_command}`
       git_cat_output
@@ -89,7 +89,7 @@ module UlakTest
         # git_tag_command = "git -C #{Repository.find_by_id(cs.repository_id).url} tag --contains #{cs.revision}"
         isMergeTags = false
         merge_tags = isMergeTags ? "--merged" : ""
-        git_tag_command = "git -C #{cs.repository.root_url} tag #{merge_tags} --contains #{cs.revision} "
+        git_tag_command = `git -C #{cs.repository.root_url} tag "#{merge_tags}" --contains "#{cs.revision}"`
         puts ">>>> git_tag_command: #{git_tag_command}"
 
         # Komutu çalıştırın ve çıktıyı yakalayın

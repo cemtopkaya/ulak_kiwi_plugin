@@ -54,7 +54,9 @@
 		]
 	},
 	"settings": {
-		"rubyLsp.rubyVersionManager": "auto",
+		"rubyLsp.rubyVersionManager": {
+			"identifier": "auto"
+		},
 		"rubyLsp.customRubyCommand": "PATH=/usr/bin/ruby:$PATH",
 		"rubyLsp.formatter": "auto",
 		// Explorer sekmesinde görüntülenmesini istemediğimiz dizinler için "files.exclude"
