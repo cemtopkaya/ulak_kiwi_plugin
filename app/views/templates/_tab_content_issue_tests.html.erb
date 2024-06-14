@@ -6,17 +6,18 @@
 
   <%
     kiwi_info = UlakTest::PluginSetting.get_kiwi_settings
-    @issue.changesets.each do |changeset| 
+    @issue.changesets.each do |changeset|
+    
+      # Eğer değişiklik seti bir projeye ait değilse, atla
+      if changeset.repository&.project.nil?
+        next
+      end
   %>
       <h3>
         <div class="left">
           <abbr title="<%= changeset.repository %>">
             <%= "#{l(:label_revision)} #{changeset.format_identifier}" %>
           </abbr>
-          <% if changeset.repository&.project.nil? %>
-            <% next %>
-          <% end %>
-          
           <% if changeset.filechanges.any? && User.current.allowed_to?(:browse_repository, changeset.project) %>
             (<%= link_to(l(:label_diff),
                           controller: "repositories",
