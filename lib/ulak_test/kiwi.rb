@@ -49,6 +49,7 @@ module UlakTest
     }
 
     def self.create_http(_url)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.create_http() metodu çalıştırıldı")
       url = URI.parse(_url)
       http = Net::HTTP.new(url.host, url.port)
       http.use_ssl = true # Eğer HTTPS kullanılıyorsa bu satırı eklemeliyiz
@@ -57,6 +58,7 @@ module UlakTest
     end
 
     def self.is_kiwi_accessable
+      Rails.logger.debug(">>>> UlakTest::Kiwi.is_kiwi_accessable() metodu çalıştırıldı")
       begin
         login()
         return {
@@ -74,6 +76,7 @@ module UlakTest
     end
 
     def self.make_request_body(method = nil, params = {})
+      Rails.logger.debug(">>>> UlakTest::Kiwi.make_request_body() metodu çalıştırıldı")
       body = {
         jsonrpc: "2.0",
         method: method,
@@ -86,6 +89,7 @@ module UlakTest
     end
 
     def self.login
+      Rails.logger.debug(">>>> UlakTest::Kiwi.login() metodu çalıştırıldı")
       begin
         @headers.delete(:Cookie)
         rest = UlakTest::PluginSetting.get_kiwi_settings()
@@ -118,6 +122,7 @@ module UlakTest
     end
 
     def self.logout
+      Rails.logger.debug(">>>> UlakTest::Kiwi.logout() metodu çalıştırıldı")
       begin
         rest = UlakTest::PluginSetting.get_kiwi_settings()
         body = make_request_body("TestCase.filter", [{ :category__product => "3" }])
@@ -135,6 +140,7 @@ module UlakTest
     end
 
     def self.fetch_product(id = 3)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_product() metodu çalıştırıldı")
       login()
       result = nil
 
@@ -158,6 +164,7 @@ module UlakTest
     end
 
     def self.fetch_products()
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_products() metodu çalıştırıldı")
       login()
       result = nil
 
@@ -172,13 +179,13 @@ module UlakTest
         # POST isteği yapma
         response = http.post(url, body.to_json, @headers)
         if response.is_a?(Net::HTTPSuccess)
-          puts "İstek başarılı. Yanıt: #{response.body}"
+          Rails.logger.debug("İstek başarılı. Yanıt: #{response.body}")
           result = JSON.parse(response.body)["result"]
         else
-          puts "İstek başarısız. Hata kodu: #{response.code}, Hata mesajı: #{response.message}"
+          Rails.logger.debug("İstek başarısız. Hata kodu: #{response.code}, Hata mesajı: #{response.message}")
         end
       rescue StandardError => e
-        puts "----- Error occurred: #{e.message}"
+        Rails.logger.error("----- Error occurred: #{e.message}")
       ensure
         logout()
       end
@@ -187,6 +194,7 @@ module UlakTest
     end
 
     def self.fetch_product_categories(product_id = 3)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_product_categories() metodu çalıştırıldı")
       login()
       result = nil
 
@@ -211,6 +219,7 @@ module UlakTest
     end
 
     def self.fetch_test_cases(category_product = "3")
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_test_cases() metodu çalıştırıldı")
       login()
       result = nil
 
@@ -240,6 +249,7 @@ module UlakTest
     # @param [Array<Integer>] case_ids Test durumu kimlik numaralarının bir dizisi
     # @return [Array] Test sürdürmelerinin bir dizisi
     def self.fetch_testexecution_by_case_id_in(case_ids)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_testexecution_by_case_id_in() metodu çalıştırıldı")
       unless case_ids.is_a?(Array)
         raise ArgumentError, "case_ids parameter must be an array"
       end
@@ -273,12 +283,18 @@ module UlakTest
     # @param [Array<Integer>] case_ids Test durumu kimlik numaralarının bir dizisi
     # @return [Array] Test sürdürmelerinin bir dizisi
     def self.fetch_testexecution_by_run__id_in_case__id_in(run_ids, case_ids)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_testexecution_by_run__id_in_case__id_in() metodu çalıştırıldı")
       unless run_ids.is_a?(Array)
         raise ArgumentError, "run_ids parameter must be an array"
       end
 
       unless case_ids.is_a?(Array)
         raise ArgumentError, "case_ids parameter must be an array"
+      end
+
+      if run_ids.empty? || case_ids.empty?
+        Rails.logger.debug("run_ids or case_ids is empty")
+        return []
       end
 
       result = nil
@@ -296,7 +312,7 @@ module UlakTest
         result = JSON.parse(response.body)["result"]
         result
       rescue StandardError => e
-        puts "----- Error occurred: #{e.message}"
+        Rails.logger.error("----- Error occurred: #{e.message}")
       ensure
         logout()
       end
@@ -310,6 +326,7 @@ module UlakTest
     # @param [String] Etiket adı içerisinde paket_adı=versiyonu değeri gelecek
     # @return [String] ???
     def self.fetch_tags_by_run_ids(run_ids, tag_name)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_tags_by_run_ids() metodu çalıştırıldı")
       unless run_ids.is_a?(Array)
         raise ArgumentError, "run_ids parameter must be an array"
       end
@@ -345,6 +362,7 @@ module UlakTest
     # @param [String] Etiket adı içerisinde paket_adı=versiyonu değeri gelecek
     # @return [String]
     def self.fetch_tags_by_tag_name(tag_name)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_tags_by_tag_name() metodu çalıştırıldı")
       if tag_name.empty?
         raise ArgumentError, "tag_name parameter must be a string"
       end
@@ -372,6 +390,7 @@ module UlakTest
     end
 
     def self.fetch_tags_by_name__in(tag_names)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_tags_by_name__in() metodu çalıştırıldı")
       unless tag_names.is_a?(Array)
         raise ArgumentError, "tag_names parameter must be an array"
       end
@@ -404,6 +423,7 @@ module UlakTest
     # @param [boolean] is_run_null Etiketi "Test Koşularında" kullanılmış veya kullanılmamış olarak seç
     # @return [String[]]
     def self.fetch_tags_by_name__in_and_run__isnull(tag_names, is_run_null = false)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_tags_by_name__in_and_run__isnull() metodu çalıştırıldı")
       unless tag_names.is_a?(Array)
         raise ArgumentError, "tag_names parameter must be an array"
       end
@@ -434,6 +454,7 @@ module UlakTest
     # @param [Array<Integer>] case_ids Test durumu kimlik numaralarının bir dizisi
     # @return [Array] Test sürdürmelerinin bir dizisi
     def self.fetch_runs_by_id__in(run_ids)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_runs_by_id__in() metodu çalıştırıldı")
       unless run_ids.is_a?(Array)
         raise ArgumentError, "run_ids parameter must be an array"
       end
@@ -465,6 +486,7 @@ module UlakTest
     # @param [Array<Integer>] case_ids Test durumu kimlik numaralarının bir dizisi
     # @return [Array] Test sürdürmelerinin bir dizisi
     def self.fetch_testrun_by_id__in_plan__in(run_ids, plan_ids)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_testrun_by_id__in_plan__in() metodu çalıştırıldı")
       unless plan_ids.is_a?(Array) and run_ids.is_a?(Array)
         raise ArgumentError, "plan_ids, run_ids parameters must be an array"
       end
@@ -493,6 +515,7 @@ module UlakTest
     end
 
     def self.fetch_test_plans()
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_test_plans() metodu çalıştırıldı")
       result = nil
       login()
 
@@ -517,6 +540,7 @@ module UlakTest
     end
 
     def self.fetch_test_plan_by_id(plan_id)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_test_plan_by_id() metodu çalıştırıldı")
       unless plan_id
         raise ArgumentError, "plan_id parameter can't be nil and must be greater than 0"
       end
@@ -545,6 +569,7 @@ module UlakTest
     end
 
     def self.fetch_test_cases_by_plan_ids(plan_ids)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_test_cases_by_plan_ids() metodu çalıştırıldı")
       unless plan_ids
         raise ArgumentError, "plan_ids parameter can't be nil and must be greater than 0"
       end
@@ -577,6 +602,7 @@ module UlakTest
     end
 
     def self.fetch_test_cases_by_plan_id(plan_id)
+      Rails.logger.debug(">>>> UlakTest::Kiwi.fetch_test_cases_by_plan_id() metodu çalıştırıldı")
       unless plan_id
         raise ArgumentError, "plan_id parameter can't be nil and must be greater than 0"
       end
