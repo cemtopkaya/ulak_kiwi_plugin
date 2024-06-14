@@ -65,6 +65,7 @@
     puts result
     %>
     <script>
+        debugger
         var plan_case_results = <%= result.to_json.html_safe %>
         var kiwi_runs = <%= @kiwi_runs.group_by {|run| run["plan"]}.to_json.html_safe %>
     </script>

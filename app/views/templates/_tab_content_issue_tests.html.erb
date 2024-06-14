@@ -13,6 +13,10 @@
           <abbr title="<%= changeset.repository %>">
             <%= "#{l(:label_revision)} #{changeset.format_identifier}" %>
           </abbr>
+          <% if changeset.repository&.project.nil? %>
+            <% next %>
+          <% end %>
+          
           <% if changeset.filechanges.any? && User.current.allowed_to?(:browse_repository, changeset.project) %>
             (<%= link_to(l(:label_diff),
                           controller: "repositories",
@@ -178,7 +182,11 @@
         })
 
         $ph_test_result = $(`#${select_id}`).parent().find('div.test_result_placeholder')
-        $ph_test_result && $ph_test_result.hide().html( data ).slideDown( 'slow', function() {
+        if($ph_test_result.length == 0) {
+          return console.log(">>>>> Placeholder bulunamadı!")
+        }
+        
+        $ph_test_result.hide().html( data ).slideDown( 'slow', function() {
 
           console.log(">>> Sekme açılıyor...")
           debugger
@@ -275,7 +283,7 @@
         - yoksa "c-pill--nostatus" ile beyaz arka planda 
         ve içinde <span class="test-case-result ..."> elemanları olmayacak.
       */
-      liCaseLastStatus = plan_case_results[planId] ? plan_case_results[planId].find(a=>a.case == caseId) : null
+      liCaseLastStatus = (typeof plan_case_results !== 'undefined' && plan_case_results[planId]) ? plan_case_results[planId].find(a=>a.case == caseId) : null
 
       if ( !liCaseLastStatus ) {
         return true; // continue yerine true kullanılır
